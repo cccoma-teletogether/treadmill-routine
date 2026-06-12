@@ -646,6 +646,11 @@
             max-width: 480px;
         }
 
+        /* 루틴 편집 폼이 좁으면 입력란이 잘리므로 루틴관리 패널은 더 넓게 */
+        #manageTab {
+            max-width: 560px;
+        }
+
         .changelog-content {
             font-size: 0.85em;
             line-height: 1.55;
@@ -2571,20 +2576,34 @@
         const isLinear = phase.startSpeed !== undefined && phase.endSpeed !== undefined && phase.startSpeed !== phase.endSpeed;
         const speed = phase.startSpeed !== undefined ? phase.startSpeed : '';
         const endSpeed = phase.endSpeed !== undefined ? phase.endSpeed : '';
+        // 시간은 분 단위로 입력/표시하고 저장 시 초로 변환한다
+        const durationMin = phase.duration ? +(phase.duration / 60).toFixed(2) : '';
+        const inputStyle = 'width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em; box-sizing: border-box; min-width: 0;';
+        const cellStyle = 'flex: 1; min-width: 64px; display: flex; flex-direction: column; gap: 2px;';
+        const labelStyle = 'font-size: 0.7em; color: #888; white-space: nowrap;';
         const phaseDiv = document.createElement('div');
         phaseDiv.setAttribute('data-phase-index', idx);
         phaseDiv.style.cssText = 'background: white; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #ddd;';
         phaseDiv.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 6px;">
-                <input type="text" placeholder="단계명" data-field="name" value="${phase.phase || ''}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em; box-sizing: border-box;">
-                <div style="display: flex; gap: 5px; align-items: center;">
-                    <input type="number" placeholder="속도(km/h)" data-field="start" value="${speed}" min="0" step="0.5" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em;">
-                    <div data-linear-end style="display: ${isLinear ? 'flex' : 'none'}; gap: 5px; flex: 1; align-items: center;">
-                        <span style="font-size: 0.8em; color: #999; white-space: nowrap;">→</span>
-                        <input type="number" placeholder="종료 속도" data-field="end" value="${endSpeed}" min="0" step="0.5" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em;">
+                <input type="text" placeholder="단계명" data-field="name" value="${phase.phase || ''}" style="${inputStyle}">
+                <div style="display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="${cellStyle}">
+                        <span style="${labelStyle}">인클라인</span>
+                        <input type="number" data-field="incline" value="${phase.incline !== undefined && phase.incline !== 0 ? phase.incline : ''}" min="0" max="20" step="0.5" placeholder="0" style="${inputStyle}">
                     </div>
-                    <input type="number" placeholder="시간(초)" data-field="duration" value="${phase.duration || ''}" min="1" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em;">
-                    <input type="number" placeholder="인클라인" data-field="incline" value="${phase.incline !== undefined && phase.incline !== 0 ? phase.incline : ''}" min="0" max="20" step="0.5" title="인클라인 (비우면 0)" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em;">
+                    <div style="${cellStyle}">
+                        <span style="${labelStyle}">속도(km/h)</span>
+                        <input type="number" data-field="start" value="${speed}" min="0" step="0.5" style="${inputStyle}">
+                    </div>
+                    <div data-linear-end style="${cellStyle} display: ${isLinear ? 'flex' : 'none'};">
+                        <span style="${labelStyle}">→ 종료 속도</span>
+                        <input type="number" data-field="end" value="${endSpeed}" min="0" step="0.5" style="${inputStyle}">
+                    </div>
+                    <div style="${cellStyle}">
+                        <span style="${labelStyle}">시간(분)</span>
+                        <input type="number" data-field="duration" value="${durationMin}" min="0.5" step="0.5" style="${inputStyle}">
+                    </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <label style="font-size: 0.78em; color: #666; cursor: pointer; display: flex; align-items: center; gap: 4px;">
@@ -2654,11 +2673,13 @@
             const start = parseFloat(startInput.value);
             const isLinear = linearCheckbox && linearCheckbox.checked;
             const end = isLinear ? parseFloat(endInput.value) : start;
-            const duration = parseInt(durationInput.value);
+            // 입력은 분 단위, 저장은 초 단위
+            const durationMin = parseFloat(durationInput.value);
+            const duration = Math.round(durationMin * 60);
             const inclineInput = div.querySelector('[data-field="incline"]');
             const incline = inclineInput ? parseFloat(inclineInput.value) : NaN;
 
-            if (!name || isNaN(start) || isNaN(duration)) {
+            if (!name || isNaN(start) || isNaN(durationMin) || duration <= 0) {
                 alert('모든 필드를 입력해주세요!');
                 throw new Error('Validation failed');
             }

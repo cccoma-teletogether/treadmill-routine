@@ -1259,6 +1259,9 @@
     </div>
 </div>
 
+<!-- 스크립트보다 먼저 선언해야 초기화 코드(음악 복원 등)가 요소를 찾을 수 있다 -->
+<audio id="bgMusic" loop preload="auto"></audio>
+
 <script>
     // ===== 루틴 데이터 정의 =====
     const ROUTINES = {
@@ -1976,10 +1979,14 @@
     }
 
     async function musicDbPut(file) {
+        // File 객체를 그대로 저장하면 일부 브라우저(안드로이드 content:// 파일 등)에서
+        // 복제 실패나 유실이 생긴다 — 실제 바이트를 복사해서 저장
+        const data = await file.arrayBuffer();
+        const record = { name: file.name, type: file.type || 'audio/mpeg', data };
         const db = await musicDbOpen();
         return new Promise((resolve, reject) => {
             const tx = db.transaction('files', 'readwrite');
-            tx.objectStore('files').put(file, 'bgm');
+            tx.objectStore('files').put(record, 'bgm');
             tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         });
@@ -1994,24 +2001,58 @@
         });
     }
 
-    function applyMusicFile(file) {
+    function applyMusic(blob, name) {
         const audio = document.getElementById('bgMusic');
-        audio.src = URL.createObjectURL(file);
-        document.getElementById('btnMusicToggle').title = file.name;
+        audio.src = URL.createObjectURL(blob);
+        document.getElementById('btnMusicToggle').title = name;
     }
 
     async function onMusicFileSelected(file) {
         if (!file) return;
-        applyMusicFile(file);
-        try { await musicDbPut(file); } catch (e) { /* 미지원/실패 시 이번 세션만 사용 */ }
-        document.getElementById('statusLine').innerText = `음악: ${file.name}`;
+        applyMusic(file, file.name);
+        let savedMsg = `음악: ${file.name} (저장됨)`;
+        try { await musicDbPut(file); } catch (e) { savedMsg = `음악: ${file.name} (저장 실패 — 이번만 사용)`; }
+        document.getElementById('statusLine').innerText = savedMsg;
         if (!bgMusicEnabled) toggleBgMusic();
     }
 
+    function setMusicButtonOn(on) {
+        const btn = document.getElementById('btnMusicToggle');
+        btn.textContent = on ? '🎵 음악 켜짐' : '🎵 음악';
+        btn.classList.toggle('active', on);
+    }
+
     async function loadSavedMusic() {
+        // 볼륨 복원 (저장값 없으면 슬라이더 기본값을 오디오에 반영)
+        const volSlider = document.getElementById('musicVolume');
         try {
-            const file = await musicDbGet();
-            if (file) applyMusicFile(file);
+            const vol = localStorage.getItem('treadmill_music_volume');
+            if (vol !== null) volSlider.value = vol;
+        } catch (e) {}
+        document.getElementById('bgMusic').volume = parseFloat(volSlider.value);
+
+        try {
+            const saved = await musicDbGet();
+            if (!saved) return;
+            let blob, name;
+            if (saved instanceof Blob) {
+                // 구버전 형식 (File 그대로 저장) 호환
+                blob = saved;
+                name = saved.name || '저장된 음악';
+            } else {
+                blob = new Blob([saved.data], { type: saved.type });
+                name = saved.name;
+            }
+            applyMusic(blob, name);
+            // 지난번에 음악을 켜둔 채 종료했다면 자동으로 켜둔 상태로 복원
+            try {
+                if (localStorage.getItem('treadmill_music_on') === '1' && !bgMusicEnabled) {
+                    bgMusicEnabled = true;
+                    setMusicButtonOn(true);
+                }
+            } catch (e) {}
+            const sl = document.getElementById('statusLine');
+            if (!sl.innerText) sl.innerText = `저장된 음악: ${name}`;
         } catch (e) { /* 저장된 음악 없음 */ }
     }
 
@@ -2022,14 +2063,11 @@
             return;
         }
         bgMusicEnabled = !bgMusicEnabled;
-        const btn = document.getElementById('btnMusicToggle');
+        try { localStorage.setItem('treadmill_music_on', bgMusicEnabled ? '1' : '0'); } catch (e) {}
+        setMusicButtonOn(bgMusicEnabled);
         if (bgMusicEnabled) {
-            btn.textContent = '🎵 음악 켜짐';
-            btn.classList.add('active');
             if (isRunning) audio.play().catch(() => {});
         } else {
-            btn.textContent = '🎵 음악';
-            btn.classList.remove('active');
             audio.pause();
         }
     }
@@ -2037,6 +2075,7 @@
     function setBgMusicVolume(value) {
         const audio = document.getElementById('bgMusic');
         if (audio) audio.volume = parseFloat(value);
+        try { localStorage.setItem('treadmill_music_volume', String(value)); } catch (e) {}
     }
 
     function bgMusicPlay() {
@@ -2831,8 +2870,6 @@
         document.getElementById('statusLine').innerText = '이전 진행 상태가 복원되었습니다. 계속을 누르세요.';
     }
 </script>
-
-<audio id="bgMusic" loop preload="auto"></audio>
 
 </body>
 </html>

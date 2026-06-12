@@ -651,6 +651,12 @@
             max-width: 560px;
         }
 
+        /* 편집 중 선택된 단계 — "단계 추가"가 이 앞에 삽입된다 */
+        #phasesList .phase-selected {
+            border-color: #4a90d9 !important;
+            box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.35);
+        }
+
         .changelog-content {
             font-size: 0.85em;
             line-height: 1.55;
@@ -1256,6 +1262,7 @@
 
             <div id="phasesList" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; padding: 10px;"></div>
 
+            <div style="font-size: 0.75em; color: #7f8c8d; margin-bottom: 6px;">단계를 클릭해 선택하면 그 앞에 추가됩니다. 선택이 없으면 맨 끝에 추가됩니다.</div>
             <div class="setting-actions">
                 <button class="btn-save-settings" onclick="addPhase()">+ 단계 추가</button>
             </div>
@@ -2614,6 +2621,13 @@
                 </div>
             </div>
         `;
+        // 단계 클릭으로 선택/해제 — "단계 추가"가 선택한 단계 앞에 삽입된다
+        phaseDiv.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return; // 삭제 버튼은 제외
+            const wasSelected = phaseDiv.classList.contains('phase-selected');
+            document.querySelectorAll('#phasesList .phase-selected').forEach(d => d.classList.remove('phase-selected'));
+            if (!wasSelected) phaseDiv.classList.add('phase-selected');
+        });
         return phaseDiv;
     }
 
@@ -2626,10 +2640,19 @@
     }
 
     function addPhase() {
-        const phaseIndex = editingPhases.length;
-        const phaseDiv = createPhaseDiv(phaseIndex);
-        document.getElementById('phasesList').appendChild(phaseDiv);
+        const list = document.getElementById('phasesList');
+        const selected = list.querySelector('.phase-selected');
+        const phaseDiv = createPhaseDiv(editingPhases.length);
+        if (selected) {
+            list.insertBefore(phaseDiv, selected); // 선택한 단계 앞에 삽입
+        } else {
+            list.appendChild(phaseDiv); // 선택이 없으면 맨 끝
+        }
         editingPhases.push({});
+        reindexPhases();
+        const nameInput = phaseDiv.querySelector('[data-field="name"]');
+        if (nameInput) nameInput.focus();
+        phaseDiv.scrollIntoView({ block: 'nearest' });
     }
 
     function removePhase(index) {

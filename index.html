@@ -368,17 +368,53 @@
         /* === 피트니스 파이 다이얼 === */
         .fitness-wrap {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 16px;
             width: 100%;
         }
 
         .fitness-pie-svg {
-            width: 100%;
-            max-width: 180px;
+            width: 38%;
+            max-width: 150px;
+            min-width: 110px;
             height: auto;
             aspect-ratio: 1 / 1;
+            flex-shrink: 0;
+        }
+
+        .fitness-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 7px;
+        }
+
+        .fitness-next {
+            color: #4a90d9;
+            font-weight: bold;
+            font-size: 1.05em;
+        }
+
+        .next-badge {
+            background: #4a90d9;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin-right: 2px;
+        }
+
+        .fitness-current {
+            background: #4a90d9;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em;
+            padding: 5px 12px;
+            border-radius: 5px;
+            line-height: 1.2;
         }
 
         .fitness-pie-bg { fill: #4a90d9; }
@@ -1144,7 +1180,11 @@
                     <text id="fitnessPhaseTime" x="60" y="55" class="fitness-time-num">00:00</text>
                     <text x="60" y="73" class="fitness-time-label">단계 남은시간</text>
                 </svg>
-                <div class="fitness-total">전체 남은: <span id="fitnessTotalDisp">40:00</span></div>
+                <div class="fitness-info">
+                    <div class="fitness-next"><span class="next-badge">NEXT</span> <span id="fitnessNext">--</span></div>
+                    <div class="fitness-current" id="fitnessCurrent">대기 중</div>
+                    <div class="fitness-total">전체 남은: <span id="fitnessTotalDisp">40:00</span></div>
+                </div>
             </div>
         </div>
 
@@ -1684,7 +1724,8 @@
     function announcePhase(stage) {
         beep(880, 180);
         setTimeout(() => beep(1175, 220), 220);
-        speak(`${stage.phase}, ${stage.startSpeed.toFixed(1)} 킬로미터`);
+        const inclinePart = stage.incline ? `, 인클라인 ${stage.incline}` : '';
+        speak(`${stage.phase}, ${stage.startSpeed.toFixed(1)} 킬로미터${inclinePart}`);
     }
 
     function vibrate(ms = 100) {
@@ -1950,6 +1991,8 @@
             bgMusicStop();
             document.getElementById('currentPhase').innerText = "운동 완료!";
             document.getElementById('currentSpeed').innerText = "수고하셨습니다 💦";
+            document.getElementById('fitnessCurrent').textContent = '완료!';
+            document.getElementById('fitnessNext').textContent = '--';
             updateTimeDisplay('phase', 0, 1);
             updateTimeDisplay('total', 0, totalDuration);
             document.getElementById('nextPhase').innerHTML = "오늘의 유산소 루틴을 성공적으로 마쳤습니다!";
@@ -1997,20 +2040,33 @@
             lastPrewarnedIndex = index;
             const next = routine[index + 1];
             beep(660, 150);
-            speak(`10초 후, ${next.phase}, ${getAdjustedSpeed(next.startSpeed, index + 1).toFixed(1)} 킬로미터`);
+            const nextIncline = next.incline ? `, 인클라인 ${next.incline}` : '';
+            speak(`10초 후, ${next.phase}, ${getAdjustedSpeed(next.startSpeed, index + 1).toFixed(1)} 킬로미터${nextIncline}`);
         }
 
         document.getElementById('currentPhase').innerText = stage.phase;
 
-        let speedText;
+        let speedText, nowSpeedNum;
         if (adjustedStartSpeed === adjustedEndSpeed) {
+            nowSpeedNum = adjustedStartSpeed;
             speedText = formatSpeed(adjustedStartSpeed);
         } else {
             const ratio = Math.min(1, Math.max(0, phaseElapsed / stage.duration));
-            const now = adjustedStartSpeed + (adjustedEndSpeed - adjustedStartSpeed) * ratio;
-            speedText = `${formatSpeed(now)}  →  ${formatSpeed(adjustedEndSpeed)}`;
+            nowSpeedNum = adjustedStartSpeed + (adjustedEndSpeed - adjustedStartSpeed) * ratio;
+            speedText = `${formatSpeed(nowSpeedNum)}  →  ${formatSpeed(adjustedEndSpeed)}`;
         }
         document.getElementById('currentSpeed').innerText = speedText;
+
+        // 피트니스 스타일: 현재 인클라인+속도, 다음 단계 인클라인+속도
+        document.getElementById('fitnessCurrent').textContent =
+            `${stage.incline || 0} for ${nowSpeedNum.toFixed(1)}km/h`;
+        if (index + 1 < routine.length) {
+            const nx = routine[index + 1];
+            document.getElementById('fitnessNext').textContent =
+                `인클라인 ${nx.incline || 0}, ${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}km/h`;
+        } else {
+            document.getElementById('fitnessNext').textContent = '마지막 단계';
+        }
         updateTimeDisplay('phase', phaseSecLeft, stage.duration);
         updateTimeDisplay('total', totalSecLeft, totalDuration);
 
@@ -2239,6 +2295,9 @@
         clearProgress();
         document.getElementById('currentPhase').innerText = "대기 중";
         document.getElementById('currentSpeed').innerText = "0.0 km/h";
+        document.getElementById('fitnessCurrent').textContent = '대기 중';
+        document.getElementById('fitnessNext').textContent = routine[0]
+            ? `인클라인 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h` : '--';
         const firstPhaseDur = (routine[0] && routine[0].duration) || 1;
         updateTimeDisplay('phase', firstPhaseDur, firstPhaseDur);
         updateTimeDisplay('total', totalDuration, totalDuration);
@@ -2513,6 +2572,7 @@
                         <input type="number" placeholder="종료 속도" data-field="end" value="${endSpeed}" min="0" step="0.5" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em;">
                     </div>
                     <input type="number" placeholder="시간(초)" data-field="duration" value="${phase.duration || ''}" min="1" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em;">
+                    <input type="number" placeholder="인클라인" data-field="incline" value="${phase.incline !== undefined && phase.incline !== 0 ? phase.incline : ''}" min="0" max="20" step="0.5" title="인클라인 (비우면 0)" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85em;">
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <label style="font-size: 0.78em; color: #666; cursor: pointer; display: flex; align-items: center; gap: 4px;">
@@ -2583,6 +2643,8 @@
             const isLinear = linearCheckbox && linearCheckbox.checked;
             const end = isLinear ? parseFloat(endInput.value) : start;
             const duration = parseInt(durationInput.value);
+            const inclineInput = div.querySelector('[data-field="incline"]');
+            const incline = inclineInput ? parseFloat(inclineInput.value) : NaN;
 
             if (!name || isNaN(start) || isNaN(duration)) {
                 alert('모든 필드를 입력해주세요!');
@@ -2597,7 +2659,8 @@
                 phase: name,
                 startSpeed: start,
                 endSpeed: end,
-                duration: duration
+                duration: duration,
+                incline: isNaN(incline) ? 0 : incline
             });
         });
 

@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="러닝머신 루틴">
     <meta name="theme-color" content="#ffffff">
-    <link rel="manifest" href="data:application/json,{%22name%22:%22러닝머신%20루틴%22,%22short_name%22:%22러닝머신%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23ffffff%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20192%20192%27%3E%3Crect%20fill=%27%23ff6b6b%27%20width=%27192%27%20height=%27192%27/%3E%3Ctext%20x=%2750%25%27%20y=%2750%25%27%20dominant-baseline=%27middle%27%20text-anchor=%27middle%27%20font-size=%27100%27%3E🏃%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
+    <link rel="manifest" href="manifest.json">
     <title>러닝머신 루틴 타이머</title>
     <style>
         :root {
@@ -2355,6 +2355,13 @@
             switchTab('timer');
             vibrate(100);
         }
+    }
+
+    // ===== 서비스 워커 등록 (PWA 설치/오프라인 지원, HTTPS에서만 동작) =====
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
     }
 
     // ===== 초기화 =====

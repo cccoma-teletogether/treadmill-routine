@@ -1,8 +1,9 @@
-const CACHE_NAME = 'treadmill-routine-v1';
+const CACHE_NAME = 'treadmill-routine-v2';
 const APP_SHELL = [
     './',
     './index.html',
     './manifest.json',
+    './changelog.md',
     './icon.svg',
     './icon-maskable.svg'
 ];

@@ -72,7 +72,7 @@
         }
 
         .tab-buttons {
-            display: none;
+            display: flex;
             position: absolute;
             top: 10px;
             right: 10px;
@@ -133,7 +133,7 @@
             background: var(--color-card-light);
             padding: 20px;
             width: 100%;
-            max-width: 350px;
+            max-width: 430px;
             flex-shrink: 0;
             overflow-y: auto;
             display: flex;
@@ -159,10 +159,11 @@
             cursor: pointer;
             display: grid;
             grid-template-columns: 1fr auto auto;
-            gap: 12px;
+            gap: 8px;
             align-items: center;
             min-height: 44px;
             touch-action: manipulation;
+            word-break: keep-all;
         }
 
         .routine-item:active {
@@ -188,6 +189,7 @@
             color: #7f8c8d;
             text-align: right;
             min-width: 80px;
+            white-space: nowrap;
         }
 
         .routine-time {
@@ -196,6 +198,7 @@
             text-align: center;
             min-width: 50px;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .routine-item.current .routine-speed {
@@ -568,6 +571,97 @@
             font-size: 1.2em;
         }
 
+        .changelog-panel {
+            max-width: 480px;
+        }
+
+        .changelog-content {
+            font-size: 0.85em;
+            line-height: 1.55;
+            word-break: keep-all;
+        }
+
+        .changelog-content .cl-task {
+            margin: 18px 0 6px 0;
+            padding: 8px 10px;
+            background: #f5f5f5;
+            border-left: 4px solid var(--color-primary);
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .changelog-content .cl-task-id {
+            color: var(--color-primary);
+            margin-right: 8px;
+        }
+
+        .changelog-content .cl-task-date {
+            color: #7f8c8d;
+            font-weight: normal;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
+
+        .changelog-content ul {
+            margin: 4px 0 8px 0;
+            padding-left: 18px;
+        }
+
+        .changelog-content li {
+            margin-bottom: 3px;
+        }
+
+        .changelog-content .cl-quote {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin: 2px 0;
+        }
+
+        .changelog-content h3 {
+            color: var(--color-primary);
+            font-size: 1.05em;
+            margin: 16px 0 6px 0;
+        }
+
+        .changelog-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .changelog-content th,
+        .changelog-content td {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+            text-align: left;
+            word-break: break-all;
+        }
+
+        .changelog-content code {
+            background: #f0f0f0;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+
+        .changelog-content pre {
+            background: #f0f0f0;
+            padding: 8px 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        .changelog-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .changelog-content hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 14px 0;
+        }
+
         .setting-group {
             background: #f5f5f5;
             padding: 15px;
@@ -691,6 +785,14 @@
         .settings-item-name {
             flex: 1;
             font-weight: bold;
+        }
+
+        /* 데스크톱: 우상단 탭 버튼이 패널 제목을 가리지 않도록 상단 여백 확보 */
+        @media (min-width: 769px) {
+            .routine-list,
+            .settings-panel {
+                padding-top: 52px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -893,6 +995,7 @@
     <button class="tab-button" onclick="switchTab('routine')">루틴</button>
     <button class="tab-button" onclick="switchTab('settings')">⚙️ 설정</button>
     <button class="tab-button" onclick="switchTab('manage')">📝 관리</button>
+    <button class="tab-button" onclick="switchTab('changelog')">📋 작업기록</button>
 </div>
 
 <div class="wrapper">
@@ -1053,6 +1156,11 @@
             <div id="currentSettingsDisplay" style="margin-top: 8px;"></div>
         </div>
     </div>
+
+    <div class="settings-panel changelog-panel" id="changelogTab">
+        <h2>📋 작업기록</h2>
+        <div class="changelog-content" id="changelogContent">불러오는 중...</div>
+    </div>
 </div>
 
 <script>
@@ -1197,12 +1305,14 @@
             document.getElementById('routineTab').classList.toggle('active', tabName === 'routine');
             document.getElementById('settingsTab').classList.toggle('active', tabName === 'settings');
             document.getElementById('manageTab').classList.toggle('active', tabName === 'manage');
+            document.getElementById('changelogTab').classList.toggle('active', tabName === 'changelog');
         } else {
             // 데스크톱: timer와 routine은 항상 표시
             document.getElementById('timerTab').classList.add('active');
             document.getElementById('routineTab').classList.add('active');
             document.getElementById('settingsTab').classList.toggle('active', tabName === 'settings');
             document.getElementById('manageTab').classList.toggle('active', tabName === 'manage');
+            document.getElementById('changelogTab').classList.toggle('active', tabName === 'changelog');
         }
 
         document.querySelectorAll('.tab-button').forEach((btn, idx) => {
@@ -1210,7 +1320,8 @@
                 (idx === 0 && tabName === 'timer') ||
                 (idx === 1 && tabName === 'routine') ||
                 (idx === 2 && tabName === 'settings') ||
-                (idx === 3 && tabName === 'manage')
+                (idx === 3 && tabName === 'manage') ||
+                (idx === 4 && tabName === 'changelog')
             );
         });
 
@@ -1218,6 +1329,8 @@
             renderSpeedSettings();
         } else if (tabName === 'manage') {
             loadRoutineList();
+        } else if (tabName === 'changelog') {
+            loadChangelog();
         }
     }
 
@@ -2354,6 +2467,95 @@
             loadRoutine(routineId);
             switchTab('timer');
             vibrate(100);
+        }
+    }
+
+    // ===== 작업기록 (changelog.md) =====
+    let changelogLoaded = false;
+
+    function escapeHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function mdInline(s) {
+        return escapeHtml(s)
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+            .replace(/(^|[^"(])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+    }
+
+    function renderChangelogMd(md) {
+        const lines = md.split(/\r?\n/);
+        let html = '', inList = false, inTable = false, inCode = false, codeBuf = [];
+        const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+        const closeTable = () => { if (inTable) { html += '</table>'; inTable = false; } };
+
+        for (const raw of lines) {
+            const line = raw.trimEnd();
+
+            if (/^```/.test(line)) {
+                if (inCode) { html += `<pre><code>${escapeHtml(codeBuf.join('\n'))}</code></pre>`; codeBuf = []; }
+                else { closeList(); closeTable(); }
+                inCode = !inCode;
+                continue;
+            }
+            if (inCode) { codeBuf.push(raw); continue; }
+
+            // [TASK-001] 2026-05-23 제목
+            const task = line.match(/^\[(TASK-\d+)\]\s+(\d{4}-\d{2}-\d{2})\s+(.*)$/);
+            if (task) {
+                closeList(); closeTable();
+                html += `<div class="cl-task"><span class="cl-task-id">${task[1]}</span><span class="cl-task-date">${task[2]}</span><span>${mdInline(task[3])}</span></div>`;
+                continue;
+            }
+            if (/^---+$/.test(line)) { closeList(); closeTable(); html += '<hr>'; continue; }
+            if (/^#{1,3}\s/.test(line)) {
+                closeList(); closeTable();
+                html += `<h3>${mdInline(line.replace(/^#{1,3}\s+/, ''))}</h3>`;
+                continue;
+            }
+            if (/^>\s?/.test(line)) {
+                closeList(); closeTable();
+                html += `<div class="cl-quote">${mdInline(line.replace(/^>\s?/, ''))}</div>`;
+                continue;
+            }
+            if (/^[-*]\s+/.test(line)) {
+                closeTable();
+                if (!inList) { html += '<ul>'; inList = true; }
+                html += `<li>${mdInline(line.replace(/^[-*]\s+/, ''))}</li>`;
+                continue;
+            }
+            if (/^\|/.test(line)) {
+                closeList();
+                if (/^\|[\s\-|:]+\|$/.test(line)) continue; // 구분선 행
+                const cells = line.replace(/^\||\|$/g, '').split('|').map(c => mdInline(c.trim()));
+                const tag = inTable ? 'td' : 'th';
+                if (!inTable) { html += '<table>'; inTable = true; }
+                html += `<tr>${cells.map(c => `<${tag}>${c}</${tag}>`).join('')}</tr>`;
+                continue;
+            }
+            if (line === '') { closeList(); closeTable(); continue; }
+            closeList(); closeTable();
+            html += `<p style="margin: 4px 0;">${mdInline(line)}</p>`;
+        }
+        closeList(); closeTable();
+        return html;
+    }
+
+    async function loadChangelog() {
+        if (changelogLoaded) return;
+        const el = document.getElementById('changelogContent');
+        try {
+            const res = await fetch('changelog.md', { cache: 'no-store' });
+            if (!res.ok) throw new Error(res.status);
+            const md = await res.text();
+            el.innerHTML = renderChangelogMd(md);
+            changelogLoaded = true;
+        } catch (e) {
+            el.innerHTML = '<div class="cl-quote">changelog.md를 불러올 수 없습니다.<br>' +
+                '파일을 직접 열었을 때(file://)는 보안 제한으로 표시되지 않습니다.<br>' +
+                '배포된 사이트 또는 로컬 서버에서 확인하세요.</div>';
         }
     }
 

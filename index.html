@@ -1397,8 +1397,9 @@
     };
 
     // ===== 현재 선택된 루틴 =====
+    // 시작 시에도 저장된 수정본(override)을 반영해야 한다 (getEffectiveRoutine은 함수 호이스팅으로 사용 가능)
     let currentRoutineId = 'routine_40m';
-    let currentRoutineData = ROUTINES[currentRoutineId];
+    let currentRoutineData = getEffectiveRoutine(currentRoutineId) || ROUTINES[currentRoutineId];
     let routine = currentRoutineData.phases;
     let totalDuration = currentRoutineData.duration;
 
@@ -2742,6 +2743,10 @@
             alert('루틴이 저장되었습니다!');
             cancelRoutineEdit();
             loadRoutineList();
+            // 현재 사용 중인 루틴을 수정한 경우 타이머/전체 루틴에 즉시 반영
+            if (routineId === currentRoutineId) {
+                loadRoutine(routineId);
+            }
             vibrate(100);
         } catch (e) {
             if (e.message !== 'Validation failed') {
@@ -3049,6 +3054,10 @@
     });
 
     // ===== 초기화 =====
+    // 저장된 수정본(override)이 있으면 제목도 수정본 기준으로 표시
+    document.getElementById('routineTitle').innerText =
+        `${currentRoutineData.icon || '🏃'} ${currentRoutineData.name}`;
+    document.title = `${currentRoutineData.name} 타이머`;
     buildDialTicks();
     loadTimerStyle();
     loadSoundPrefs();
@@ -3061,6 +3070,10 @@
     switchTab('timer');
     updateTimeDisplay('phase', (routine[0] && routine[0].duration) || 1, (routine[0] && routine[0].duration) || 1);
     updateTimeDisplay('total', totalDuration, totalDuration);
+    if (routine[0]) {
+        document.getElementById('fitnessNext').textContent =
+            `인클라인 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h`;
+    }
     loadProgress();
     if (pausedElapsedMs > 0 && pausedElapsedMs < totalDuration * 1000) {
         updateUI();

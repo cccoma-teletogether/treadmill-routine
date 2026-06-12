@@ -1,11 +1,12 @@
-const CACHE_NAME = 'treadmill-routine-v2';
+const CACHE_NAME = 'treadmill-routine-v3';
 const APP_SHELL = [
     './',
     './index.html',
     './manifest.json',
     './changelog.md',
     './icon.svg',
-    './icon-maskable.svg'
+    './icon-maskable.svg',
+    './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

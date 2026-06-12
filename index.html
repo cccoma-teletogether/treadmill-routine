@@ -156,7 +156,7 @@
             background: var(--color-card-light);
             padding: 20px;
             width: 100%;
-            max-width: 430px;
+            max-width: 480px;
             flex-shrink: 0;
             overflow-y: auto;
             display: flex;
@@ -181,8 +181,8 @@
             transition: all 0.2s;
             cursor: pointer;
             display: grid;
-            grid-template-columns: 1fr auto auto auto;
-            gap: 8px;
+            grid-template-columns: 1fr auto auto auto auto;
+            gap: 7px;
             align-items: center;
             min-height: 44px;
             touch-action: manipulation;
@@ -223,6 +223,13 @@
             color: #7f8c8d;
             text-align: right;
             min-width: 80px;
+            white-space: nowrap;
+        }
+
+        .routine-dur {
+            font-size: 0.85em;
+            color: #95a5a6;
+            text-align: center;
             white-space: nowrap;
         }
 
@@ -2389,8 +2396,9 @@
                 ? `${r.startSpeed.toFixed(1)} km/h`
                 : `${r.startSpeed.toFixed(1)}→${r.endSpeed.toFixed(1)} km/h`;
             cumulativeTime += r.duration;
+            const durText = formatTime(r.duration);
             const timeText = formatTime(cumulativeTime);
-            item.innerHTML = `<span>${r.phase}</span><span class="routine-incline">경사 ${r.incline || 0}</span><span class="routine-speed">${speedText}</span><span class="routine-time">${timeText}</span>`;
+            item.innerHTML = `<span>${r.phase}</span><span class="routine-incline">경사 ${r.incline || 0}</span><span class="routine-speed">${speedText}</span><span class="routine-dur">${durText}</span><span class="routine-time">${timeText}</span>`;
 
             // 롱프레스 (1초): 롱프레스 확인 후 점프
             item.addEventListener('touchstart', (e) => {

@@ -125,7 +125,7 @@
             position: absolute;
             top: 10px;
             left: 10px;
-            display: none;
+            display: block;
             z-index: 100;
         }
 
@@ -494,6 +494,7 @@
 
         .btn-start { background-color: var(--color-info); }
         .btn-pause { background-color: var(--color-warning); color: #2d3436 !important; }
+        .btn-skip { background-color: #7f8c8d; }
         .btn-reset { background-color: var(--color-danger); }
 
         .music-control {
@@ -689,6 +690,22 @@
             background: #f0f0f0;
         }
 
+        .history-stats {
+            font-size: 0.85em;
+            padding: 6px 0 8px 0;
+            border-bottom: 2px solid rgba(127, 140, 141, 0.25);
+            margin-bottom: 6px;
+        }
+
+        .history-stats:empty {
+            display: none;
+        }
+
+        .h-partial {
+            color: #e67e22;
+            font-size: 0.85em;
+        }
+
         .history-list {
             font-size: 0.85em;
             max-height: 180px;
@@ -865,8 +882,9 @@
             font-weight: bold;
         }
 
-        /* 데스크톱: 우상단 탭 버튼이 패널 제목을 가리지 않도록 상단 여백 확보 */
+        /* 데스크톱: 상단 루틴 선택/탭 버튼이 패널 제목을 가리지 않도록 상단 여백 확보 */
         @media (min-width: 769px) {
+            .container,
             .routine-list,
             .settings-panel {
                 padding-top: 52px;
@@ -1140,6 +1158,7 @@
 
         <div class="controls">
             <button class="btn-start" id="btnStartPause" onclick="toggleTimer()">시작</button>
+            <button class="btn-skip" onclick="skipPhase()" title="다음 단계로 건너뛰기">다음 ▶</button>
             <button class="btn-reset" onclick="resetTimer()">초기화</button>
         </div>
 
@@ -1235,7 +1254,17 @@
         </div>
 
         <div class="setting-group" style="margin-top: 12px;">
+            <label>🔔 알림</label>
+            <div class="style-picker">
+                <label><input type="checkbox" id="prefVoice" checked onchange="setSoundPref('voice', this.checked)"> 음성 안내</label>
+                <label><input type="checkbox" id="prefBeep" checked onchange="setSoundPref('beep', this.checked)"> 효과음</label>
+                <label><input type="checkbox" id="prefVibrate" checked onchange="setSoundPref('vibrate', this.checked)"> 진동</label>
+            </div>
+        </div>
+
+        <div class="setting-group">
             <label>🏅 운동 기록</label>
+            <div id="historyStats" class="history-stats"></div>
             <div id="historyList" class="history-list">기록이 없습니다.</div>
             <div class="setting-actions" style="margin-top: 8px;">
                 <button class="btn-reset-settings" onclick="clearWorkoutHistory()">기록 비우기</button>
@@ -1244,7 +1273,7 @@
 
         <div class="setting-group">
             <label>💾 데이터 백업/복원</label>
-            <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 8px;">커스텀 루틴, 프리셋, 속도 설정, 운동 기록을 JSON 파일로 저장하거나 복원합니다.</div>
+            <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 8px;">커스텀 루틴, 프리셋, 속도 설정, 운동 기록을 JSON 파일로 저장하거나 복원합니다. (음악 파일은 포함되지 않습니다)</div>
             <div class="setting-actions">
                 <button class="btn-save-settings" onclick="exportAppData()">내보내기</button>
                 <button class="btn-reset-settings" onclick="document.getElementById('importFileInput').click()">가져오기</button>
@@ -1339,9 +1368,12 @@
     let longPressTimer = null;
 
     // ===== 진행 상태 저장/복원 (앱 종료 후 재시작 시 이어하기) =====
+    const PROGRESS_MAX_AGE_MS = 12 * 60 * 60 * 1000; // 12시간 지난 진행 상태는 무시
+
     function saveProgress(elapsedMs) {
         try {
-            localStorage.setItem(PROGRESS_PREFIX + currentRoutineId, String(Math.floor(elapsedMs)));
+            localStorage.setItem(PROGRESS_PREFIX + currentRoutineId,
+                JSON.stringify({ ms: Math.floor(elapsedMs), ts: Date.now() }));
         } catch (e) {}
     }
 
@@ -1352,7 +1384,18 @@
     function loadProgress() {
         try {
             const raw = localStorage.getItem(PROGRESS_PREFIX + currentRoutineId);
-            const ms = parseInt(raw, 10);
+            if (!raw) return;
+            let ms, ts;
+            if (raw[0] === '{') {
+                const obj = JSON.parse(raw);
+                ms = obj.ms; ts = obj.ts;
+            } else {
+                ms = parseInt(raw, 10); ts = null; // 구버전 형식 호환
+            }
+            if (ts && Date.now() - ts > PROGRESS_MAX_AGE_MS) {
+                clearProgress();
+                return;
+            }
             if (ms > 0 && ms < totalDuration * 1000) {
                 pausedElapsedMs = ms;
             }
@@ -1594,6 +1637,7 @@
     }
 
     function beep(frequency = 880, durationMs = 200) {
+        if (!soundPrefs.beep) return;
         if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -1607,7 +1651,26 @@
         osc.stop(audioCtx.currentTime + durationMs / 1000);
     }
 
+    // ===== 알림(음성/효과음/진동) 설정 =====
+    let soundPrefs = { voice: true, beep: true, vibrate: true };
+
+    function loadSoundPrefs() {
+        try {
+            const raw = localStorage.getItem('treadmill_sound');
+            if (raw) soundPrefs = Object.assign(soundPrefs, JSON.parse(raw));
+        } catch (e) {}
+        document.getElementById('prefVoice').checked = soundPrefs.voice;
+        document.getElementById('prefBeep').checked = soundPrefs.beep;
+        document.getElementById('prefVibrate').checked = soundPrefs.vibrate;
+    }
+
+    function setSoundPref(key, on) {
+        soundPrefs[key] = on;
+        try { localStorage.setItem('treadmill_sound', JSON.stringify(soundPrefs)); } catch (e) {}
+    }
+
     function speak(text) {
+        if (!soundPrefs.voice) return;
         if (!('speechSynthesis' in window)) return;
         try {
             const u = new SpeechSynthesisUtterance(text);
@@ -1625,6 +1688,7 @@
     }
 
     function vibrate(ms = 100) {
+        if (!soundPrefs.vibrate) return;
         if (navigator.vibrate) {
             navigator.vibrate(ms);
         }
@@ -1899,7 +1963,7 @@
                 setTimeout(() => beep(1760, 400), 280);
                 speak('운동을 완료했습니다. 수고하셨습니다.');
                 vibrate(100);
-                addWorkoutHistory();
+                addWorkoutHistory(totalDuration, true);
             }
             return;
         }
@@ -2158,6 +2222,11 @@
         if (force !== true && (isRunning || (pausedElapsedMs > 0 && pausedElapsedMs < totalDuration * 1000))) {
             if (!confirm('타이머를 초기화하시겠습니까?\n현재까지의 진행 상황이 사라집니다.')) return;
         }
+        // 1분 이상 운동하다 중단한 경우 미완료로 기록
+        const elapsedBeforeReset = currentElapsedMs();
+        if (elapsedBeforeReset >= 60000 && elapsedBeforeReset < totalDuration * 1000) {
+            addWorkoutHistory(elapsedBeforeReset / 1000, false);
+        }
         stopTicking();
         releaseWakeLock();
         isRunning = false;
@@ -2178,6 +2247,30 @@
         document.getElementById('statusLine').innerText = '';
         updateRoutineListHighlight();
         vibrate(20);
+    }
+
+    // 현재 단계를 건너뛰고 다음 단계 시작점으로 이동 (운동 중이면 그대로 이어서 진행)
+    function skipPhase() {
+        const elapsedSec = currentElapsedMs() / 1000;
+        const info = getStageAt(elapsedSec);
+        if (!info) return;
+        if (info.index + 1 >= routine.length) {
+            document.getElementById('statusLine').innerText = '마지막 단계입니다.';
+            return;
+        }
+        let acc = 0;
+        for (let i = 0; i <= info.index; i++) acc += routine[i].duration;
+        pausedElapsedMs = acc * 1000;
+        if (isRunning) {
+            startEpochMs = Date.now();
+            lastProgressSaveMs = 0;
+        } else {
+            saveProgress(pausedElapsedMs);
+            document.getElementById('statusLine').innerText = `${routine[info.index + 1].phase}부터 계속합니다.`;
+        }
+        updateUI();
+        updateRoutineListHighlight();
+        vibrate(50);
     }
 
     function jumpToRoutine(targetIndex) {
@@ -2750,13 +2843,14 @@
         } catch (e) { return []; }
     }
 
-    function addWorkoutHistory() {
+    function addWorkoutHistory(durationSec, completed) {
         try {
             const history = getWorkoutHistory();
             history.push({
                 ts: Date.now(),
                 routine: (currentRoutineData && currentRoutineData.name) || '루틴',
-                durationSec: totalDuration
+                durationSec: Math.floor(durationSec),
+                completed: completed !== false
             });
             // 최근 100건만 유지
             localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-100)));
@@ -2765,16 +2859,37 @@
 
     function renderWorkoutHistory() {
         const el = document.getElementById('historyList');
+        const statsEl = document.getElementById('historyStats');
         const history = getWorkoutHistory();
         if (!history.length) {
             el.textContent = '기록이 없습니다.';
+            statsEl.innerHTML = '';
             return;
         }
+
+        // 통계: 최근 7일, 누적, 연속 일수
+        const dayKey = d => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        const weekAgo = Date.now() - 7 * 86400000;
+        let weekCount = 0, weekSec = 0, totalSec = 0;
+        const daySet = new Set();
+        history.forEach(h => {
+            totalSec += h.durationSec;
+            if (h.ts >= weekAgo) { weekCount++; weekSec += h.durationSec; }
+            daySet.add(dayKey(new Date(h.ts)));
+        });
+        let streak = 0;
+        const cursor = new Date();
+        if (!daySet.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1); // 오늘 안 했으면 어제부터 센다
+        while (daySet.has(dayKey(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1); }
+        const fmtMin = s => s >= 3600 ? `${(s / 3600).toFixed(1)}시간` : `${Math.round(s / 60)}분`;
+        statsEl.innerHTML = `최근 7일 <b>${weekCount}회 · ${fmtMin(weekSec)}</b> &nbsp;|&nbsp; 누적 ${fmtMin(totalSec)} &nbsp;|&nbsp; 연속 <b>${streak}일</b>`;
+
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         el.innerHTML = history.slice().reverse().map(h => {
             const d = new Date(h.ts);
             const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]}) ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-            return `<div class="history-item"><span class="h-date">${date}</span><span class="h-name">${h.routine}</span><span class="h-dur">${formatTime(h.durationSec)}</span></div>`;
+            const mark = h.completed === false ? ' <span class="h-partial">중단</span>' : '';
+            return `<div class="history-item"><span class="h-date">${date}</span><span class="h-name">${h.routine}${mark}</span><span class="h-dur">${formatTime(h.durationSec)}</span></div>`;
         }).join('');
     }
 
@@ -2850,9 +2965,19 @@
         if (isRunning) saveProgress(currentElapsedMs());
     });
 
+    // PC: 스페이스바로 시작/일시정지
+    document.addEventListener('keydown', (e) => {
+        if (e.code !== 'Space' || e.repeat) return;
+        const t = e.target;
+        if (t && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(t.tagName)) return;
+        e.preventDefault();
+        toggleTimer();
+    });
+
     // ===== 초기화 =====
     buildDialTicks();
     loadTimerStyle();
+    loadSoundPrefs();
     loadSavedMusic();
     loadSpeedSettings();
     loadPresetList();

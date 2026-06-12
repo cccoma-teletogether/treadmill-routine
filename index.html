@@ -181,7 +181,7 @@
             transition: all 0.2s;
             cursor: pointer;
             display: grid;
-            grid-template-columns: 1fr auto auto;
+            grid-template-columns: 1fr auto auto auto;
             gap: 8px;
             align-items: center;
             min-height: 44px;
@@ -205,6 +205,17 @@
             background: #e8f8f5;
             border-left-color: #27ae60;
             opacity: 0.7;
+        }
+
+        .routine-incline {
+            font-size: 0.8em;
+            color: #4a90d9;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .routine-item.current .routine-incline {
+            font-weight: bold;
         }
 
         .routine-speed {
@@ -2366,7 +2377,7 @@
                 : `${r.startSpeed.toFixed(1)}→${r.endSpeed.toFixed(1)} km/h`;
             cumulativeTime += r.duration;
             const timeText = formatTime(cumulativeTime);
-            item.innerHTML = `<span>${r.phase}</span><span class="routine-speed">${speedText}</span><span class="routine-time">${timeText}</span>`;
+            item.innerHTML = `<span>${r.phase}</span><span class="routine-incline">경사 ${r.incline || 0}</span><span class="routine-speed">${speedText}</span><span class="routine-time">${timeText}</span>`;
 
             // 롱프레스 (1초): 롱프레스 확인 후 점프
             item.addEventListener('touchstart', (e) => {

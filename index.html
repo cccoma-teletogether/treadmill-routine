@@ -620,6 +620,70 @@
             display: block;
         }
 
+        .quick-edit-section {
+            margin-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            padding-top: 6px;
+        }
+        .btn-quick-edit {
+            width: 100%;
+            font-size: 0.8em;
+            padding: 5px 10px;
+            background: transparent;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #555;
+            text-align: left;
+        }
+        .qe-header, .qe-row {
+            display: grid;
+            grid-template-columns: 1fr 46px 54px 54px;
+            gap: 4px;
+            align-items: center;
+            padding: 3px 0;
+        }
+        .qe-header {
+            font-size: 0.72em;
+            color: #999;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+            text-align: center;
+        }
+        .qe-header span:first-child { text-align: left; padding-left: 2px; }
+        .qe-row { border-bottom: 1px solid #f5f5f5; }
+        .qe-row.qe-current { background: rgba(74,144,217,0.12); border-radius: 4px; }
+        .qe-name {
+            font-size: 0.8em;
+            color: #444;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-left: 2px;
+        }
+        .qe-current .qe-name { font-weight: bold; color: #2d3436; }
+        .qe-input {
+            width: 100%;
+            padding: 3px 2px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.85em;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        #quickEditGrid { max-height: 220px; overflow-y: auto; margin: 4px 0; }
+        .qe-actions { display: flex; gap: 8px; margin-top: 6px; }
+
+        @media (prefers-color-scheme: dark) {
+            .quick-edit-section { border-color: rgba(255,255,255,0.1); }
+            .btn-quick-edit { border-color: #555; color: #aaa; }
+            .qe-header { color: #777; border-color: #444; }
+            .qe-row { border-color: #333; }
+            .qe-name { color: #ccc; }
+            .qe-current .qe-name { color: #e0e0e0; }
+            .qe-input { background: #2a2a2e; color: #e0e0e0; border-color: #555; }
+        }
+
         @media (prefers-color-scheme: dark) {
             .music-control { background: rgba(255,255,255,0.06); }
             .btn-music { background: #3a3a3e; color: #e0e0e0; }
@@ -1276,6 +1340,20 @@
         </div>
         <div id="ytPlayerContainer">
             <div id="ytPlayerEl"></div>
+        </div>
+
+        <div class="quick-edit-section">
+            <button class="btn-quick-edit" id="btnQuickEdit" onclick="toggleQuickEdit()">✏️ 단계 속도/경사 편집</button>
+            <div id="quickEditPanel" style="display:none;">
+                <div class="qe-header">
+                    <span>단계</span><span>경사</span><span>시작</span><span>끝 km/h</span>
+                </div>
+                <div id="quickEditGrid"></div>
+                <div class="qe-actions">
+                    <button class="btn-save-settings" onclick="saveQuickEdit()">💾 저장</button>
+                    <button class="btn-reset-settings" onclick="cancelQuickEdit()">취소</button>
+                </div>
+            </div>
         </div>
 
         <div class="status-line" id="statusLine"></div>
@@ -2413,6 +2491,77 @@
         }
         const audio = document.getElementById('bgMusic');
         if (audio) { audio.pause(); audio.currentTime = 0; }
+    }
+
+    // ===== 단계 속도/경사 빠른 편집 =====
+    function toggleQuickEdit() {
+        const panel = document.getElementById('quickEditPanel');
+        const btn = document.getElementById('btnQuickEdit');
+        const opening = panel.style.display === 'none';
+        panel.style.display = opening ? 'block' : 'none';
+        btn.textContent = opening ? '▲ 편집 닫기' : '✏️ 단계 속도/경사 편집';
+        if (opening) renderQuickEdit();
+    }
+
+    function renderQuickEdit() {
+        const grid = document.getElementById('quickEditGrid');
+        grid.innerHTML = '';
+        const elapsedSec = currentElapsedMs() / 1000;
+        const info = (isRunning || pausedElapsedMs > 0) ? getStageAt(elapsedSec) : null;
+        const currentIdx = info ? info.index : -1;
+
+        routine.forEach((phase, i) => {
+            const isCurrent = i === currentIdx;
+            const row = document.createElement('div');
+            row.className = 'qe-row' + (isCurrent ? ' qe-current' : '');
+            row.innerHTML =
+                `<span class="qe-name" title="${phase.phase}">${phase.phase}</span>` +
+                `<input class="qe-input" type="number" data-qe-idx="${i}" data-qe-field="incline" value="${+(phase.incline || 0)}" min="0" max="15" step="0.5">` +
+                `<input class="qe-input" type="number" data-qe-idx="${i}" data-qe-field="start" value="${phase.startSpeed}" min="0" max="25" step="0.1">` +
+                `<input class="qe-input" type="number" data-qe-idx="${i}" data-qe-field="end" value="${phase.endSpeed}" min="0" max="25" step="0.1">`;
+            grid.appendChild(row);
+        });
+
+        if (currentIdx >= 0) {
+            const rows = grid.querySelectorAll('.qe-row');
+            if (rows[currentIdx]) rows[currentIdx].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    function saveQuickEdit() {
+        const modified = JSON.parse(JSON.stringify(currentRoutineData));
+        document.querySelectorAll('#quickEditGrid .qe-input').forEach(input => {
+            const idx = parseInt(input.dataset.qeIdx);
+            const field = input.dataset.qeField;
+            const val = parseFloat(input.value);
+            if (isNaN(val) || idx >= modified.phases.length) return;
+            if (field === 'incline') modified.phases[idx].incline = val;
+            else if (field === 'start') modified.phases[idx].startSpeed = val;
+            else if (field === 'end') modified.phases[idx].endSpeed = val;
+        });
+
+        try {
+            const raw = localStorage.getItem('treadmill_routines');
+            const customRoutines = raw ? JSON.parse(raw) : [];
+            const existing = customRoutines.findIndex(r => r.id === currentRoutineId);
+            if (existing >= 0) customRoutines[existing] = modified;
+            else customRoutines.push(modified);
+            localStorage.setItem('treadmill_routines', JSON.stringify(customRoutines));
+        } catch(e) {}
+
+        // 타이머 리셋 없이 메모리 상태만 갱신
+        currentRoutineData = modified;
+        routine = modified.phases;
+
+        renderRoutineList();
+        document.getElementById('statusLine').innerText = '루틴 설정이 저장되었습니다.';
+        cancelQuickEdit();
+        vibrate(30);
+    }
+
+    function cancelQuickEdit() {
+        document.getElementById('quickEditPanel').style.display = 'none';
+        document.getElementById('btnQuickEdit').textContent = '✏️ 단계 속도/경사 편집';
     }
 
     // ===== 타이머 제어 =====

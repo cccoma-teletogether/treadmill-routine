@@ -1,3 +1,7 @@
+[TASK-056] 2026-06-14 프로그레스바 오른쪽 라운드 잘림 수정
+- box-sizing: content-box + padding: 15px + width: 100% 조합으로 컨테이너가 viewport+30px 너비가 되던 문제를 수정합니다.
+- 타이머 모드 .container와 .routine-list에 box-sizing: border-box를 추가하여 패딩이 너비 안에 포함되도록 합니다.
+
 [TASK-055] 2026-06-14 피트니스 모드 오른쪽 잘림 수정
 - fitness-info에 width:100%가 적용되어 파이 차트 너비 + 100%로 컨테이너를 초과하던 문제를 수정합니다.
 - width:100% → flex:1로 변경하여 남은 공간만 차지하도록 합니다.

@@ -1169,6 +1169,8 @@
                 flex: 0 0 auto;
                 overflow-y: visible;
                 height: auto;
+                box-sizing: border-box;  /* padding이 width 안에 포함 → 오른쪽 잘림 방지 */
+                width: 100%;
             }
             body[data-mobile-tab="timer"] .routine-list {
                 display: flex;
@@ -1178,6 +1180,8 @@
                 margin-top: 0;
                 padding: 12px 15px;
                 overflow-y: visible;
+                box-sizing: border-box;
+                width: 100%;
             }
             body[data-mobile-tab="timer"] .routine-list h2 {
                 font-size: 1em;

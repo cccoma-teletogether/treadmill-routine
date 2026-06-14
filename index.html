@@ -377,6 +377,32 @@
             .dial-label { color: #b0b0b0; }
         }
 
+        /* === 아날로그 모드 전용: 여백 축소 · 폰트 확대 · 좌측 정렬 === */
+        body[data-timer-style="analog"] .speed-display {
+            text-align: left;
+            padding: 10px 14px;
+        }
+        body[data-timer-style="analog"] .time-group {
+            justify-content: flex-start;
+            gap: 16px;
+            margin: 6px 0;
+        }
+        body[data-timer-style="analog"] .dial-box {
+            align-items: flex-start;
+            text-align: left;
+        }
+        body[data-timer-style="analog"] .dial-label {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        body[data-timer-style="analog"] .analog-dial {
+            max-width: 190px;
+        }
+        body[data-timer-style="analog"] .dial-time {
+            font-size: 14px;
+        }
+
         /* === 스타일 전환 === */
         body[data-timer-style="digital"] .timer-style-analog,
         body[data-timer-style="digital"] .timer-style-fitness { display: none !important; }
@@ -1194,9 +1220,22 @@
                 margin: 12px 0;
             }
 
-            /* 아날로그 스타일에선 두 다이얼을 가로로 유지 */
+            /* 아날로그 스타일에선 두 다이얼을 가로로 유지, 좌측 정렬 */
             body[data-timer-style="analog"] .time-group {
                 flex-direction: row;
+                justify-content: flex-start;
+                gap: 12px;
+                margin: 6px 0;
+            }
+            body[data-timer-style="analog"] .analog-dial {
+                max-width: none;   /* flex:1 이 너비를 결정 */
+            }
+            body[data-timer-style="analog"] .dial-label {
+                font-size: 1.05em;
+            }
+            body[data-timer-style="analog"] .speed-display {
+                font-size: 2.4em;
+                margin: 4px 0;
             }
 
             .time-box {

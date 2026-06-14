@@ -1125,7 +1125,8 @@
 
             /* 모바일 타이머 모드: 타이머 아래 루틴 전체를 페이지 스크롤로 보기 */
             body[data-mobile-tab="timer"] {
-                overflow-y: auto;   /* 모바일 overflow:hidden 해제 */
+                overflow-x: hidden;  /* 가로 스크롤 차단 */
+                overflow-y: auto;    /* 세로만 허용 */
             }
             body[data-mobile-tab="timer"] .wrapper {
                 flex-direction: column;
@@ -1156,6 +1157,15 @@
                 padding: 15px;
                 margin-top: 50px;
                 height: calc(100vh - 50px);
+                overflow-x: hidden;
+            }
+
+            .style-picker {
+                gap: 6px;
+            }
+            .style-picker label {
+                padding: 6px 6px;
+                font-size: 0.82em;
             }
 
             h1 {

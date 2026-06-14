@@ -1,3 +1,7 @@
+[TASK-038] 2026-06-14 모바일 설정 탭 하단 콘텐츠 잘림 수정
+- 모바일에서 설정 탭의 height가 100vh로 고정되어 margin-top만큼 하단이 잘려 가져오기/내보내기가 보이지 않던 버그가 수정됩니다.
+- 각 화면 크기별 margin-top을 뺀 calc(100vh - Npx)로 높이를 보정합니다.
+
 [TASK-037] 2026-06-14 clipdown.net 등 서드파티 YouTube URL 인식 개선
 - `/youtube/VIDEO_ID/` 경로 패턴을 포함한 URL도 YouTube ID로 자동 인식합니다.
 - clipdown.net, y2mate 등 YouTube ID를 경로에 포함한 사이트 URL을 붙여넣어도 YouTube 플레이어로 재생됩니다.

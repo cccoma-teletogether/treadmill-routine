@@ -1,3 +1,7 @@
+[TASK-037] 2026-06-14 clipdown.net 등 서드파티 YouTube URL 인식 개선
+- `/youtube/VIDEO_ID/` 경로 패턴을 포함한 URL도 YouTube ID로 자동 인식합니다.
+- clipdown.net, y2mate 등 YouTube ID를 경로에 포함한 사이트 URL을 붙여넣어도 YouTube 플레이어로 재생됩니다.
+
 [TASK-036] 2026-06-14 URL / YouTube 음악 재생 지원
 - 🔗 버튼을 눌러 YouTube 주소 또는 일반 음악 파일 URL을 붙여넣어 배경음악으로 사용할 수 있습니다.
 - YouTube는 IFrame Player API로 제어되며 루프 재생, 볼륨 연동, 타이머 시작/정지와 자동 연동됩니다.

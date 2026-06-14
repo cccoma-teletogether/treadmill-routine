@@ -595,10 +595,36 @@
             flex-shrink: 0;
         }
 
+        .music-url-row {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 4px 12px;
+        }
+        .music-url-row input {
+            flex: 1;
+            padding: 5px 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.85em;
+            min-width: 0;
+        }
+        #ytPlayerContainer {
+            display: none;
+            margin-top: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #ytPlayerContainer iframe {
+            display: block;
+        }
+
         @media (prefers-color-scheme: dark) {
             .music-control { background: rgba(255,255,255,0.06); }
             .btn-music { background: #3a3a3e; color: #e0e0e0; }
             .music-label { color: #b0b0b0; }
+            .music-url-row input { background: #2a2a2e; color: #e0e0e0; border-color: #555; }
         }
 
         .status-line {
@@ -1234,9 +1260,17 @@
         <div class="music-control">
             <button class="btn-music" id="btnMusicToggle" onclick="toggleBgMusic()">🎵 음악</button>
             <button class="btn-music" onclick="document.getElementById('musicFileInput').click()" title="음악 파일 선택">📂</button>
+            <button class="btn-music" onclick="toggleUrlInput()" title="URL / YouTube 주소로 음악 설정">🔗</button>
             <span class="music-label">볼륨</span>
             <input type="range" class="music-volume" id="musicVolume" min="0" max="1" step="0.05" value="0.3" oninput="setBgMusicVolume(this.value)">
             <input type="file" id="musicFileInput" accept="audio/*,video/mp4" style="display: none;" onchange="onMusicFileSelected(this.files[0])">
+        </div>
+        <div class="music-url-row" id="musicUrlRow">
+            <input type="text" id="musicUrlInput" placeholder="YouTube 또는 음악 파일 URL 붙여넣기" onkeydown="if(event.key==='Enter')applyMusicUrl()">
+            <button class="btn-music" onclick="applyMusicUrl()">적용</button>
+        </div>
+        <div id="ytPlayerContainer">
+            <div id="ytPlayerEl"></div>
         </div>
 
         <div class="status-line" id="statusLine"></div>
@@ -2119,6 +2153,96 @@
     // 음악 파일은 배포에 포함하지 않는다 (저작권) — 사용자가 자기 기기에서 선택,
     // IndexedDB에 보관해서 재방문 시에도 유지
     let bgMusicEnabled = false;
+    let musicSource = 'file'; // 'file' | 'url-direct' | 'url-youtube'
+    let ytPlayer = null;
+    let pendingYtVideoId = null;
+
+    window.onYouTubeIframeAPIReady = function() {
+        if (pendingYtVideoId) createYtPlayer(pendingYtVideoId);
+    };
+
+    function extractYouTubeId(url) {
+        const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        return m ? m[1] : null;
+    }
+
+    function toggleUrlInput() {
+        const row = document.getElementById('musicUrlRow');
+        const visible = row.style.display === 'flex';
+        row.style.display = visible ? 'none' : 'flex';
+        if (!visible) document.getElementById('musicUrlInput').focus();
+    }
+
+    function applyMusicUrl() {
+        const url = document.getElementById('musicUrlInput').value.trim();
+        if (!url) return;
+        document.getElementById('musicUrlRow').style.display = 'none';
+        const ytId = extractYouTubeId(url);
+        if (ytId) {
+            applyYouTube(ytId);
+        } else {
+            applyDirectUrl(url);
+        }
+        try { localStorage.setItem('treadmill_music_url', url); } catch(e) {}
+        if (!bgMusicEnabled) toggleBgMusic();
+    }
+
+    function applyDirectUrl(url) {
+        musicSource = 'url-direct';
+        destroyYtPlayer();
+        const audio = document.getElementById('bgMusic');
+        audio.src = url;
+        audio.loop = true;
+        document.getElementById('btnMusicToggle').title = url;
+        document.getElementById('statusLine').innerText = `음악 URL 적용됨`;
+    }
+
+    function applyYouTube(videoId) {
+        musicSource = 'url-youtube';
+        const audio = document.getElementById('bgMusic');
+        audio.pause(); audio.src = '';
+        document.getElementById('ytPlayerContainer').style.display = 'block';
+        document.getElementById('btnMusicToggle').title = `YouTube: ${videoId}`;
+        document.getElementById('statusLine').innerText = `YouTube 음악 적용됨`;
+        if (ytPlayer && ytPlayer.loadVideoById) {
+            ytPlayer.loadVideoById(videoId);
+            if (!bgMusicEnabled || !isRunning) ytPlayer.pauseVideo();
+        } else {
+            pendingYtVideoId = videoId;
+            if (window.YT && window.YT.Player) {
+                createYtPlayer(videoId);
+            } else if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+                const s = document.createElement('script');
+                s.src = 'https://www.youtube.com/iframe_api';
+                document.head.appendChild(s);
+            }
+        }
+    }
+
+    function createYtPlayer(videoId) {
+        if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
+        pendingYtVideoId = null;
+        const vol = Math.round(parseFloat(document.getElementById('musicVolume').value) * 100);
+        ytPlayer = new YT.Player('ytPlayerEl', {
+            height: '120',
+            width: '213',
+            videoId: videoId,
+            playerVars: { autoplay: 0, loop: 1, playlist: videoId, controls: 1, rel: 0 },
+            events: {
+                onReady: (e) => {
+                    e.target.setVolume(vol);
+                    if (bgMusicEnabled && isRunning) e.target.playVideo();
+                }
+            }
+        });
+    }
+
+    function destroyYtPlayer() {
+        if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
+        document.getElementById('ytPlayerContainer').style.display = 'none';
+        document.getElementById('ytPlayerEl').innerHTML = '';
+        musicSource = 'file';
+    }
 
     function musicDbOpen() {
         return new Promise((resolve, reject) => {
@@ -2160,6 +2284,10 @@
 
     async function onMusicFileSelected(file) {
         if (!file) return;
+        destroyYtPlayer();
+        musicSource = 'file';
+        try { localStorage.removeItem('treadmill_music_url'); } catch(e) {}
+        document.getElementById('musicUrlInput').value = '';
         applyMusic(file, file.name);
         let savedMsg = `음악: ${file.name} (저장됨)`;
         try { await musicDbPut(file); } catch (e) { savedMsg = `음악: ${file.name} (저장 실패 — 이번만 사용)`; }
@@ -2174,7 +2302,7 @@
     }
 
     async function loadSavedMusic() {
-        // 볼륨 복원 (저장값 없으면 슬라이더 기본값을 오디오에 반영)
+        // 볼륨 복원
         const volSlider = document.getElementById('musicVolume');
         try {
             const vol = localStorage.getItem('treadmill_music_volume');
@@ -2182,12 +2310,30 @@
         } catch (e) {}
         document.getElementById('bgMusic').volume = parseFloat(volSlider.value);
 
+        // URL이 저장된 경우 URL 우선 복원
+        try {
+            const savedUrl = localStorage.getItem('treadmill_music_url');
+            if (savedUrl) {
+                document.getElementById('musicUrlInput').value = savedUrl;
+                const ytId = extractYouTubeId(savedUrl);
+                if (ytId) applyYouTube(ytId);
+                else applyDirectUrl(savedUrl);
+                try {
+                    if (localStorage.getItem('treadmill_music_on') === '1') {
+                        bgMusicEnabled = true;
+                        setMusicButtonOn(true);
+                    }
+                } catch(e) {}
+                return;
+            }
+        } catch(e) {}
+
+        // 파일 복원 (URL 없을 때)
         try {
             const saved = await musicDbGet();
             if (!saved) return;
             let blob, name;
             if (saved instanceof Blob) {
-                // 구버전 형식 (File 그대로 저장) 호환
                 blob = saved;
                 name = saved.name || '저장된 음악';
             } else {
@@ -2195,7 +2341,6 @@
                 name = saved.name;
             }
             applyMusic(blob, name);
-            // 지난번에 음악을 켜둔 채 종료했다면 자동으로 켜둔 상태로 복원
             try {
                 if (localStorage.getItem('treadmill_music_on') === '1' && !bgMusicEnabled) {
                     bgMusicEnabled = true;
@@ -2209,7 +2354,7 @@
 
     function toggleBgMusic() {
         const audio = document.getElementById('bgMusic');
-        if (!bgMusicEnabled && !audio.src) {
+        if (!bgMusicEnabled && !audio.src && musicSource !== 'url-youtube') {
             document.getElementById('musicFileInput').click();
             return;
         }
@@ -2217,30 +2362,46 @@
         try { localStorage.setItem('treadmill_music_on', bgMusicEnabled ? '1' : '0'); } catch (e) {}
         setMusicButtonOn(bgMusicEnabled);
         if (bgMusicEnabled) {
-            if (isRunning) audio.play().catch(() => {});
+            if (isRunning) bgMusicPlay();
         } else {
-            audio.pause();
+            bgMusicPause();
         }
     }
 
     function setBgMusicVolume(value) {
+        const v = parseFloat(value);
         const audio = document.getElementById('bgMusic');
-        if (audio) audio.volume = parseFloat(value);
+        if (audio) audio.volume = v;
+        if (musicSource === 'url-youtube' && ytPlayer && ytPlayer.setVolume) {
+            try { ytPlayer.setVolume(Math.round(v * 100)); } catch(e) {}
+        }
         try { localStorage.setItem('treadmill_music_volume', String(value)); } catch (e) {}
     }
 
     function bgMusicPlay() {
         if (!bgMusicEnabled) return;
+        if (musicSource === 'url-youtube') {
+            if (ytPlayer && ytPlayer.playVideo) try { ytPlayer.playVideo(); } catch(e) {}
+            return;
+        }
         const audio = document.getElementById('bgMusic');
-        if (audio) audio.play().catch(() => {});
+        if (audio && audio.src) audio.play().catch(() => {});
     }
 
     function bgMusicPause() {
+        if (musicSource === 'url-youtube') {
+            if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); } catch(e) {}
+            return;
+        }
         const audio = document.getElementById('bgMusic');
         if (audio) audio.pause();
     }
 
     function bgMusicStop() {
+        if (musicSource === 'url-youtube') {
+            if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); ytPlayer.seekTo(0); } catch(e) {}
+            return;
+        }
         const audio = document.getElementById('bgMusic');
         if (audio) { audio.pause(); audio.currentTime = 0; }
     }
@@ -2652,9 +2813,10 @@
         const selected = list.querySelector('.phase-selected');
         const phaseDiv = createPhaseDiv(editingPhases.length);
         if (selected) {
-            list.insertBefore(phaseDiv, selected); // 선택한 단계 앞에 삽입
+            list.insertBefore(phaseDiv, selected);
+            selected.classList.remove('phase-selected');
         } else {
-            list.appendChild(phaseDiv); // 선택이 없으면 맨 끝
+            list.appendChild(phaseDiv);
         }
         editingPhases.push({});
         reindexPhases();

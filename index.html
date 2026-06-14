@@ -148,6 +148,8 @@
             max-width: 500px;
             flex-shrink: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
             display: flex;
             flex-direction: column;
         }
@@ -159,6 +161,8 @@
             max-width: 480px;
             flex-shrink: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -586,6 +590,7 @@
             height: 4px;
             cursor: pointer;
             accent-color: var(--color-accent);
+            touch-action: pan-x;
         }
 
         .music-label {
@@ -706,6 +711,8 @@
             max-width: 400px;
             flex-shrink: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
             display: none;
             flex-direction: column;
             height: 100vh;

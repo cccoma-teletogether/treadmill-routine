@@ -2721,15 +2721,28 @@
         const elapsedSec = currentElapsedMs() / 1000;
         const info = getStageAt(elapsedSec);
 
+        let currentEl = null;
         document.querySelectorAll('.routine-item').forEach((el, idx) => {
             el.classList.remove('current', 'passed');
             if (info && idx === info.index) {
                 el.classList.add('current');
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                currentEl = el;
             } else if (info && idx < info.index) {
                 el.classList.add('passed');
             }
         });
+
+        // scrollIntoView는 부모 스크롤 컨테이너(.container)까지 건드리므로
+        // routineTab 내부만 직접 스크롤한다
+        if (currentEl) {
+            const routineTab = document.getElementById('routineTab');
+            if (routineTab) {
+                const containerRect = routineTab.getBoundingClientRect();
+                const itemRect = currentEl.getBoundingClientRect();
+                const delta = itemRect.top - containerRect.top - routineTab.clientHeight / 2 + currentEl.clientHeight / 2;
+                routineTab.scrollBy({ top: delta, behavior: 'smooth' });
+            }
+        }
     }
 
     // ===== 루틴 관리 =====

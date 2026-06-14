@@ -412,13 +412,18 @@
             flex-direction: column;
             align-items: flex-start;
             gap: 9px;
-            min-width: 0;   /* flex 축소 허용 — 가로 넘침 방지 */
+            min-width: 0;
+            overflow: hidden;
+            width: 100%;
         }
 
         .fitness-next {
             color: #4a90d9;
             font-weight: bold;
-            font-size: 1.2em;
+            font-size: 1.05em;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            width: 100%;
         }
 
         .next-badge {

@@ -148,7 +148,6 @@
             max-width: 500px;
             flex-shrink: 0;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
             display: flex;
             flex-direction: column;
@@ -161,7 +160,6 @@
             max-width: 480px;
             flex-shrink: 0;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
             display: flex;
             flex-direction: column;
@@ -711,7 +709,6 @@
             max-width: 400px;
             flex-shrink: 0;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
             display: none;
             flex-direction: column;
@@ -1685,6 +1682,12 @@
                 (idx === 3 && tabName === 'manage') ||
                 (idx === 4 && tabName === 'changelog')
             );
+        });
+
+        // 탭 전환 시 스크롤 위치를 항상 맨 위로 초기화
+        ['timerTab', 'routineTab', 'settingsTab', 'manageTab', 'changelogTab'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.scrollTop = 0;
         });
 
         if (tabName === 'settings') {

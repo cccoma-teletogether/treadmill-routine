@@ -1,3 +1,7 @@
+[TASK-042] 2026-06-14 모바일 타이머 탭 상단 잘림 수정
+- -webkit-overflow-scrolling: touch(deprecated)가 iOS에서 스크롤 위치를 예측 불가하게 복원하던 문제를 제거합니다.
+- 탭 전환 시 모든 패널의 scrollTop을 0으로 초기화하여 항상 최상단부터 표시됩니다.
+
 [TASK-041] 2026-06-14 모바일 메뉴 탭 미표시 버그 수정
 - -webkit-overflow-scrolling이 생성한 compositing layer로 인해 z-index가 무력화되어 탭이 보이지 않던 문제를 수정합니다.
 - 탭 버튼과 루틴 선택기를 position: fixed로 변경해 어떤 stacking context에서도 항상 최상단에 표시됩니다.

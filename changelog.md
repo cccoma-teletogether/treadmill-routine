@@ -1,3 +1,10 @@
+[TASK-044] 2026-06-14 설정 탭 운동기록 기능 제거
+- 설정 탭에서 운동 기록 섹션이 제거됩니다.
+
+[TASK-043] 2026-06-14 모바일 타이머 탭 상단 잘림 근본 수정
+- history.scrollRestoration = 'manual'로 iOS 브라우저의 스크롤 위치 자동 복원을 비활성화합니다.
+- requestAnimationFrame으로 초기화 후 다음 프레임에서 모든 패널의 scrollTop을 강제로 0으로 초기화합니다.
+
 [TASK-042] 2026-06-14 모바일 타이머 탭 상단 잘림 수정
 - -webkit-overflow-scrolling: touch(deprecated)가 iOS에서 스크롤 위치를 예측 불가하게 복원하던 문제를 제거합니다.
 - 탭 전환 시 모든 패널의 scrollTop을 0으로 초기화하여 항상 최상단부터 표시됩니다.

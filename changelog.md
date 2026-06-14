@@ -1,3 +1,7 @@
+[TASK-041] 2026-06-14 모바일 메뉴 탭 미표시 버그 수정
+- -webkit-overflow-scrolling이 생성한 compositing layer로 인해 z-index가 무력화되어 탭이 보이지 않던 문제를 수정합니다.
+- 탭 버튼과 루틴 선택기를 position: fixed로 변경해 어떤 stacking context에서도 항상 최상단에 표시됩니다.
+
 [TASK-040] 2026-06-14 모바일 타이머 탭 스크롤 끊김 개선
 - iOS 관성 스크롤을 위해 스크롤 컨테이너에 -webkit-overflow-scrolling: touch를 추가합니다.
 - overscroll-behavior-y: contain으로 스크롤이 body로 누출되지 않도록 합니다.

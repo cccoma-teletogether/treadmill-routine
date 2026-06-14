@@ -399,9 +399,9 @@
         }
 
         .fitness-pie-svg {
-            width: 45%;
-            max-width: 190px;
-            min-width: 130px;
+            width: 40%;
+            max-width: 180px;
+            min-width: 120px;
             height: auto;
             aspect-ratio: 1 / 1;
             flex-shrink: 0;
@@ -412,6 +412,7 @@
             flex-direction: column;
             align-items: flex-start;
             gap: 9px;
+            min-width: 0;   /* flex 축소 허용 — 가로 넘침 방지 */
         }
 
         .fitness-next {
@@ -434,10 +435,12 @@
             background: #4a90d9;
             color: white;
             font-weight: bold;
-            font-size: 1.85em;
-            padding: 6px 14px;
+            font-size: 1.55em;
+            padding: 6px 12px;
             border-radius: 5px;
             line-height: 1.2;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .fitness-pie-bg { fill: #4a90d9; }
@@ -1123,19 +1126,17 @@
                 display: flex;
             }
 
-            /* 모바일 타이머 모드: 타이머 아래 루틴 전체를 페이지 스크롤로 보기 */
-            body[data-mobile-tab="timer"] {
-                overflow-x: hidden;  /* 가로 스크롤 차단 */
-                overflow-y: auto;    /* 세로만 허용 */
-            }
+            /* 모바일 타이머 모드: wrapper가 스크롤 컨테이너 (body는 overflow:hidden 유지) */
             body[data-mobile-tab="timer"] .wrapper {
                 flex-direction: column;
-                height: auto;
-                min-height: 100vh;
+                height: 100vh;          /* 스크롤 컨테이너 높이 고정 */
+                overflow-y: auto;       /* wrapper가 세로 스크롤 */
+                overflow-x: hidden;
+                overscroll-behavior-y: contain;
             }
             body[data-mobile-tab="timer"] .container.active {
                 flex: 0 0 auto;
-                overflow-y: visible;  /* 컨테이너가 아닌 페이지가 스크롤 */
+                overflow-y: visible;
                 height: auto;
             }
             body[data-mobile-tab="timer"] .routine-list {

@@ -1,3 +1,8 @@
+[TASK-057] 2026-06-14 전체 루틴 목록 글자 크기 확대
+- routine-incline: 0.8em → 0.9em
+- routine-speed / routine-dur / routine-time: 0.85em → 0.95em
+- 모바일 routine-item 기본 크기: 0.85em → 0.95em
+
 [TASK-056] 2026-06-14 프로그레스바 오른쪽 라운드 잘림 수정
 - box-sizing: content-box + padding: 15px + width: 100% 조합으로 컨테이너가 viewport+30px 너비가 되던 문제를 수정합니다.
 - 타이머 모드 .container와 .routine-list에 box-sizing: border-box를 추가하여 패딩이 너비 안에 포함되도록 합니다.

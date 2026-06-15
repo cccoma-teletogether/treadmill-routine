@@ -1,3 +1,8 @@
+[TASK-062] 2026-06-15 모바일 피트니스 NEXT 영역 확대
+- fitness-next에 flex:1 추가 — current박스(flex:2)와 공간 비례 분할
+- NEXT 텍스트 폰트 1.15em→1.35em, 세로 중앙 정렬(align-items:center)
+- 아래위 gap 6px→4px, 여백 최소화
+
 [TASK-061] 2026-06-15 모바일 피트니스 현재단계 박스 개선
 - NEXT 텍스트 폰트 확대: 1.05em→1.15em
 - 현재단계 블루박스가 남은 세로 공간 전체를 차지(flex:1)

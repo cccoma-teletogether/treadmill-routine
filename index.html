@@ -624,7 +624,9 @@
         }
 
         .music-volume {
-            flex: 1;
+            flex: 1 1 0;
+            min-width: 0;
+            width: 0;
             height: 4px;
             cursor: pointer;
             accent-color: var(--color-accent);
@@ -1424,6 +1426,7 @@
                 font-size: 2.2em;
                 padding: 6px 10px;
                 text-align: center;
+                white-space: pre-line;
             }
 
             .fitness-total {
@@ -2392,7 +2395,7 @@
 
         // 피트니스 스타일: 현재 인클라인+속도, 다음 단계 인클라인+속도
         document.getElementById('fitnessCurrent').textContent =
-            `${stage.incline || 0} for ${nowSpeedNum.toFixed(1)}km/h`;
+            `경사${stage.incline || 0}\n${nowSpeedNum.toFixed(1)}km/h`;
         if (index + 1 < routine.length) {
             const nx = routine[index + 1];
             document.getElementById('fitnessNext').textContent =

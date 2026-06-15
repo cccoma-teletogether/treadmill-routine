@@ -1,3 +1,8 @@
+[TASK-066] 2026-06-15 피트니스 현재단계 포맷 변경 + 볼륨 슬라이더 오버플로 수정
+- fitnessCurrent 형식 "X for Y km/h" → "경사X\nYkm/h" (의도적 2줄)
+- white-space: pre-line 으로 \n 줄바꿈 적용
+- music-volume flex:1 1 0; min-width:0; width:0 → 브라우저 기본 min-width 무효화
+
 [TASK-065] 2026-06-15 모바일 피트니스 텍스트 가독성 개선
 - fitnessNext 형식 "인클라인" → "경사" 로 단축 (전체 너비에서 한 줄 표시)
 - NEXT 영역 레이아웃: 배지 위 + 텍스트 아래 세로 배치(flex-direction:column)

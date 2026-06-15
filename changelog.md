@@ -1,3 +1,7 @@
+[TASK-069] 2026-06-15 피트니스 NEXT 텍스트 "경사" → "incline" 변경
+- fitnessNext 표시: "경사 X, Y.Ykm/h" → "incline X, Y.Ykm/h"
+- fitness-next-text 폰트 1.35em + white-space: nowrap (1줄 보장)
+
 [TASK-068] 2026-06-15 피트니스 모드 레이아웃 개선
 - fitnessCurrent 포맷 "X for Y km/h" 복원 + 박스 width:100% 고정
 - NEXT 행 재배치: [NEXT 뱃지] [전체 남은] 나란히 표시

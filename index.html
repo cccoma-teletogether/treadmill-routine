@@ -1436,12 +1436,11 @@
             }
 
             .fitness-next-text {
-                font-size: 1.6em;
+                font-size: 1.35em;
                 font-weight: bold;
                 color: #4a90d9;
                 line-height: 1.2;
-                word-break: normal;
-                overflow-wrap: anywhere;
+                white-space: nowrap;
             }
 
             .fitness-current {
@@ -2427,7 +2426,7 @@
         if (index + 1 < routine.length) {
             const nx = routine[index + 1];
             document.getElementById('fitnessNext').textContent =
-                `경사 ${nx.incline || 0}, ${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}km/h`;
+                `incline ${nx.incline || 0}, ${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}km/h`;
         } else {
             document.getElementById('fitnessNext').textContent = '마지막 단계';
         }
@@ -2872,7 +2871,7 @@
         document.getElementById('currentSpeed').innerText = "0.0 km/h";
         document.getElementById('fitnessCurrent').textContent = '대기 중';
         document.getElementById('fitnessNext').textContent = routine[0]
-            ? `경사 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h` : '--';
+            ? `incline ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h` : '--';
         const firstPhaseDur = (routine[0] && routine[0].duration) || 1;
         updateTimeDisplay('phase', firstPhaseDur, firstPhaseDur);
         updateTimeDisplay('total', totalDuration, totalDuration);
@@ -3644,7 +3643,7 @@
     updateTimeDisplay('total', totalDuration, totalDuration);
     if (routine[0]) {
         document.getElementById('fitnessNext').textContent =
-            `경사 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h`;
+            `incline ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h`;
     }
     loadProgress();
     if (pausedElapsedMs > 0 && pausedElapsedMs < totalDuration * 1000) {

@@ -1,3 +1,8 @@
+[TASK-067] 2026-06-15 피트니스 현재단계 1줄 표시
+- fitnessCurrent 포맷: "경사X\nYkm/h" → "경사X Ykm/h" (1줄)
+- font-size: 2.2em → 1.6em (1줄 표시 확보)
+- white-space: nowrap + overflow: hidden (강제 1줄)
+
 [TASK-066] 2026-06-15 피트니스 현재단계 포맷 변경 + 볼륨 슬라이더 오버플로 수정
 - fitnessCurrent 형식 "X for Y km/h" → "경사X\nYkm/h" (의도적 2줄)
 - white-space: pre-line 으로 \n 줄바꿈 적용

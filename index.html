@@ -1402,20 +1402,46 @@
             }
 
             .fitness-info {
+                flex: 1;
+                min-width: 0;
                 justify-content: flex-start;
                 gap: 4px;
                 padding: 0;
             }
 
             .fitness-next {
-                flex: 1.5;
+                width: 100%;
+            }
+
+            .fitness-next {
+                flex: 1;
                 display: flex;
                 flex-direction: column;
-                align-items: flex-start;
                 justify-content: center;
-                font-size: 1.35em;
+                gap: 5px;
+            }
+
+            .fitness-next-top {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                gap: 6px;
+            }
+
+            .fitness-next-top .fitness-total {
+                font-size: 1.05em;
+                text-align: left;
+                white-space: nowrap;
+                padding: 0;
+            }
+
+            .fitness-next-text {
+                font-size: 1.6em;
+                font-weight: bold;
+                color: #4a90d9;
                 line-height: 1.2;
-                gap: 3px;
+                word-break: normal;
+                overflow-wrap: anywhere;
             }
 
             .fitness-current {
@@ -1423,16 +1449,12 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 1.6em;
+                width: 100%;
+                box-sizing: border-box;
+                font-size: 1.9em;
                 padding: 6px 10px;
                 text-align: center;
                 white-space: nowrap;
-                overflow: hidden;
-            }
-
-            .fitness-total {
-                font-size: 1.1em;
-                padding: 2px 0;
             }
         }
     </style>
@@ -1504,9 +1526,14 @@
                     <text x="60" y="76" class="fitness-time-label">단계 남은시간</text>
                 </svg>
                 <div class="fitness-info">
-                    <div class="fitness-next"><span class="next-badge">NEXT</span> <span id="fitnessNext">--</span></div>
+                    <div class="fitness-next">
+                        <div class="fitness-next-top">
+                            <span class="next-badge">NEXT</span>
+                            <span class="fitness-total">전체 남은: <span id="fitnessTotalDisp">40:00</span></span>
+                        </div>
+                        <div class="fitness-next-text" id="fitnessNext">--</div>
+                    </div>
                     <div class="fitness-current" id="fitnessCurrent">대기 중</div>
-                    <div class="fitness-total">전체 남은: <span id="fitnessTotalDisp">40:00</span></div>
                 </div>
             </div>
         </div>
@@ -2396,7 +2423,7 @@
 
         // 피트니스 스타일: 현재 인클라인+속도, 다음 단계 인클라인+속도
         document.getElementById('fitnessCurrent').textContent =
-            `경사${stage.incline || 0} ${nowSpeedNum.toFixed(1)}km/h`;
+            `${stage.incline || 0} for ${nowSpeedNum.toFixed(1)}km/h`;
         if (index + 1 < routine.length) {
             const nx = routine[index + 1];
             document.getElementById('fitnessNext').textContent =

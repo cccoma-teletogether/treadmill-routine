@@ -1,3 +1,9 @@
+[TASK-068] 2026-06-15 피트니스 모드 레이아웃 개선
+- fitnessCurrent 포맷 "X for Y km/h" 복원 + 박스 width:100% 고정
+- NEXT 행 재배치: [NEXT 뱃지] [전체 남은] 나란히 표시
+- 다음 단계(경사/속도)는 NEXT 행 아래로 이동, 폰트 1.6em 확대
+- fitness-current 폰트 1.9em (1줄 고정)
+
 [TASK-067] 2026-06-15 피트니스 현재단계 1줄 표시
 - fitnessCurrent 포맷: "경사X\nYkm/h" → "경사X Ykm/h" (1줄)
 - font-size: 2.2em → 1.6em (1줄 표시 확보)

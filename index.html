@@ -854,6 +854,53 @@
             box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.35);
         }
 
+        .changelog-desc {
+            margin: 0 0 10px;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .changelog-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 7px 10px;
+            background: #f4f7fb;
+            border-radius: 6px;
+        }
+
+        .changelog-sync-status {
+            flex: 1;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #27ae60;
+        }
+
+        .changelog-sync-status.error {
+            color: #e74c3c;
+        }
+
+        .changelog-sync-status.loading {
+            color: #888;
+            font-weight: normal;
+        }
+
+        .changelog-refresh-btn {
+            padding: 5px 12px;
+            font-size: 0.85em;
+            background: #4a90d9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .changelog-refresh-btn:hover {
+            background: #357abd;
+        }
+
         .changelog-content {
             font-size: 0.85em;
             line-height: 1.55;
@@ -1353,7 +1400,7 @@
     <button class="tab-button" onclick="switchTab('routine')">루틴</button>
     <button class="tab-button" onclick="switchTab('settings')">⚙️ 설정</button>
     <button class="tab-button" onclick="switchTab('manage')">📝 루틴관리</button>
-    <button class="tab-button" onclick="switchTab('changelog')">📋 작업기록</button>
+    <button class="tab-button" onclick="switchTab('changelog')">📋 변경이력</button>
 </div>
 
 <div class="wrapper">
@@ -1553,7 +1600,12 @@
     </div>
 
     <div class="settings-panel changelog-panel" id="changelogTab">
-        <h2>📋 작업기록</h2>
+        <h2>📋 변경이력</h2>
+        <p class="changelog-desc"><code>changelog.md</code> 기준으로 프로그램 수정 내역을 표시합니다.</p>
+        <div class="changelog-toolbar">
+            <span class="changelog-sync-status" id="changelogSyncStatus">불러오는 중...</span>
+            <button class="changelog-refresh-btn" onclick="refreshChangelog()">새로고침</button>
+        </div>
         <div class="changelog-content" id="changelogContent">불러오는 중...</div>
     </div>
 </div>
@@ -3379,20 +3431,35 @@
         return html;
     }
 
-    async function loadChangelog() {
-        if (changelogLoaded) return;
+    async function loadChangelog(force = false) {
+        if (changelogLoaded && !force) return;
         const el = document.getElementById('changelogContent');
+        const statusEl = document.getElementById('changelogSyncStatus');
+        if (statusEl) { statusEl.textContent = '불러오는 중...'; statusEl.className = 'changelog-sync-status loading'; }
+        el.innerHTML = '불러오는 중...';
         try {
             const res = await fetch('changelog.md', { cache: 'no-store' });
             if (!res.ok) throw new Error(res.status);
             const md = await res.text();
             el.innerHTML = renderChangelogMd(md);
             changelogLoaded = true;
+            if (statusEl) {
+                const now = new Date();
+                const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                statusEl.textContent = `동기화 완료 (${hhmm})`;
+                statusEl.className = 'changelog-sync-status';
+            }
         } catch (e) {
             el.innerHTML = '<div class="cl-quote">changelog.md를 불러올 수 없습니다.<br>' +
                 '파일을 직접 열었을 때(file://)는 보안 제한으로 표시되지 않습니다.<br>' +
                 '배포된 사이트 또는 로컬 서버에서 확인하세요.</div>';
+            if (statusEl) { statusEl.textContent = '동기화 실패'; statusEl.className = 'changelog-sync-status error'; }
         }
+    }
+
+    function refreshChangelog() {
+        changelogLoaded = false;
+        loadChangelog(true);
     }
 
     // ===== 데이터 백업/복원 =====

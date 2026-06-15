@@ -1,3 +1,9 @@
+[TASK-058] 2026-06-15 변경이력 탭 개선
+- 탭 버튼 및 제목 "작업기록" → "변경이력"으로 변경
+- 설명 문구 추가: changelog.md 기준 안내
+- 동기화 완료 상태 표시 (로드 시각 포함)
+- 새로고침 버튼으로 changelog.md를 다시 불러올 수 있도록 추가
+
 [TASK-057] 2026-06-14 전체 루틴 목록 글자 크기 확대
 - routine-incline: 0.8em → 0.9em
 - routine-speed / routine-dur / routine-time: 0.85em → 0.95em

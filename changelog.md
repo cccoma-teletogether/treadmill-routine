@@ -1,3 +1,8 @@
+[TASK-063] 2026-06-15 모바일 피트니스 오른쪽 패널 줄바꿈 수정
+- NEXT 배지 white-space:nowrap + flex-shrink:0 으로 "NEX\nT" 줄바꿈 방지
+- 파이차트 너비 45%→38%, min-width 130→110px 축소
+- fitness-wrap gap 12→8px 축소 → 오른쪽 패널 가용 폭 확대
+
 [TASK-062] 2026-06-15 모바일 피트니스 NEXT 영역 확대
 - fitness-next에 flex:1 추가 — current박스(flex:2)와 공간 비례 분할
 - NEXT 텍스트 폰트 1.15em→1.35em, 세로 중앙 정렬(align-items:center)

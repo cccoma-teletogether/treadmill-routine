@@ -1,3 +1,9 @@
+[TASK-064] 2026-06-15 모바일 피트니스 NEXT 텍스트 줄바꿈 개선
+- word-break: normal + overflow-wrap: anywhere 로 변경
+  → "km/" + "h" 처럼 단어 중간에서 끊기는 문제 해결 (공백 기준으로 줄바꿈)
+- 모바일 NEXT 영역 flex: 1 → 1.5 로 세로 공간 확대
+- line-height: 1.25 → 1.2 로 2행 텍스트 조밀하게
+
 [TASK-063] 2026-06-15 모바일 피트니스 오른쪽 패널 줄바꿈 수정
 - NEXT 배지 white-space:nowrap + flex-shrink:0 으로 "NEX\nT" 줄바꿈 방지
 - 파이차트 너비 45%→38%, min-width 130→110px 축소

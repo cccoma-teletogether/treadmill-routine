@@ -447,8 +447,8 @@
             color: #4a90d9;
             font-weight: bold;
             font-size: 1.05em;
-            word-break: break-word;
-            overflow-wrap: break-word;
+            word-break: normal;
+            overflow-wrap: anywhere;
             max-width: 100%;
         }
 
@@ -1406,12 +1406,13 @@
             }
 
             .fitness-next {
-                flex: 1;
+                flex: 1.5;
                 display: flex;
                 align-items: center;
                 font-size: 1.35em;
-                line-height: 1.25;
-                word-break: break-all;
+                line-height: 1.2;
+                word-break: normal;
+                overflow-wrap: anywhere;
             }
 
             .fitness-current {

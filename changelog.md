@@ -1,3 +1,7 @@
+[TASK-070] 2026-06-15 피트니스 모드 박스 높이 및 정렬 개선
+- fitness-current, fitness-next flex: none (내용물 크기로 자동 높이)
+- fitness-info justify-content: center (세로 중앙 정렬)
+
 [TASK-069] 2026-06-15 피트니스 NEXT 텍스트 "경사" → "incline" 변경
 - fitnessNext 표시: "경사 X, Y.Ykm/h" → "incline X, Y.Ykm/h"
 - fitness-next-text 폰트 1.35em + white-space: nowrap (1줄 보장)

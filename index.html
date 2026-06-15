@@ -480,7 +480,7 @@
         .fitness-pie-elapsed { fill: rgba(0, 0, 0, 0.3); }
 
         .fitness-time-num {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             fill: white;
             text-anchor: middle;
@@ -489,7 +489,7 @@
         }
 
         .fitness-time-label {
-            font-size: 9px;
+            font-size: 11px;
             fill: rgba(255, 255, 255, 0.85);
             text-anchor: middle;
             dominant-baseline: middle;
@@ -1408,11 +1408,12 @@
             .fitness-next {
                 flex: 1.5;
                 display: flex;
-                align-items: center;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: center;
                 font-size: 1.35em;
                 line-height: 1.2;
-                word-break: normal;
-                overflow-wrap: anywhere;
+                gap: 3px;
             }
 
             .fitness-current {
@@ -1495,8 +1496,8 @@
                 <svg class="fitness-pie-svg" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid meet">
                     <circle cx="60" cy="60" r="55" class="fitness-pie-bg"/>
                     <path id="fitnessPieElapsed" class="fitness-pie-elapsed"/>
-                    <text id="fitnessPhaseTime" x="60" y="55" class="fitness-time-num">00:00</text>
-                    <text x="60" y="73" class="fitness-time-label">단계 남은시간</text>
+                    <text id="fitnessPhaseTime" x="60" y="52" class="fitness-time-num">00:00</text>
+                    <text x="60" y="76" class="fitness-time-label">단계 남은시간</text>
                 </svg>
                 <div class="fitness-info">
                     <div class="fitness-next"><span class="next-badge">NEXT</span> <span id="fitnessNext">--</span></div>
@@ -2395,7 +2396,7 @@
         if (index + 1 < routine.length) {
             const nx = routine[index + 1];
             document.getElementById('fitnessNext').textContent =
-                `인클라인 ${nx.incline || 0}, ${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}km/h`;
+                `경사 ${nx.incline || 0}, ${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}km/h`;
         } else {
             document.getElementById('fitnessNext').textContent = '마지막 단계';
         }
@@ -2840,7 +2841,7 @@
         document.getElementById('currentSpeed').innerText = "0.0 km/h";
         document.getElementById('fitnessCurrent').textContent = '대기 중';
         document.getElementById('fitnessNext').textContent = routine[0]
-            ? `인클라인 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h` : '--';
+            ? `경사 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h` : '--';
         const firstPhaseDur = (routine[0] && routine[0].duration) || 1;
         updateTimeDisplay('phase', firstPhaseDur, firstPhaseDur);
         updateTimeDisplay('total', totalDuration, totalDuration);
@@ -3612,7 +3613,7 @@
     updateTimeDisplay('total', totalDuration, totalDuration);
     if (routine[0]) {
         document.getElementById('fitnessNext').textContent =
-            `인클라인 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h`;
+            `경사 ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h`;
     }
     loadProgress();
     if (pausedElapsedMs > 0 && pausedElapsedMs < totalDuration * 1000) {

@@ -1,3 +1,7 @@
+[TASK-071] 2026-06-19 루틴 목록 속도 표시 버그 수정
+- renderRoutineList에서 speedSettings 배율 미반영 버그 수정
+- getAdjustedSpeed 적용으로 목록 속도 = 타이머 속도 일치
+
 [TASK-070] 2026-06-15 피트니스 모드 박스 높이 및 정렬 개선
 - fitness-current, fitness-next flex: none (내용물 크기로 자동 높이)
 - fitness-info justify-content: center (세로 중앙 정렬)

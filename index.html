@@ -2931,9 +2931,11 @@
             const item = document.createElement('div');
             item.className = 'routine-item';
             item.id = `routine-${idx}`;
-            const speedText = r.startSpeed === r.endSpeed
-                ? `${r.startSpeed.toFixed(1)} km/h`
-                : `${r.startSpeed.toFixed(1)}→${r.endSpeed.toFixed(1)} km/h`;
+            const adjStart = getAdjustedSpeed(r.startSpeed, idx);
+            const adjEnd = getAdjustedSpeed(r.endSpeed, idx);
+            const speedText = adjStart === adjEnd
+                ? `${adjStart.toFixed(1)} km/h`
+                : `${adjStart.toFixed(1)}→${adjEnd.toFixed(1)} km/h`;
             cumulativeTime += r.duration;
             const durText = formatTime(r.duration);
             const timeText = formatTime(cumulativeTime);

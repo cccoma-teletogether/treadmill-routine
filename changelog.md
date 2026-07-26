@@ -1,3 +1,6 @@
+[TASK-072] 2026-06-19 설정 탭 모바일 하단 스크롤 버그 수정
+- padding-bottom: 100px 추가 (브라우저 하단 바에 가려지는 문제 해결)
+
 [TASK-071] 2026-06-19 루틴 목록 속도 표시 버그 수정
 - renderRoutineList에서 speedSettings 배율 미반영 버그 수정
 - getAdjustedSpeed 적용으로 목록 속도 = 타이머 속도 일치

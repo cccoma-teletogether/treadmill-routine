@@ -1390,8 +1390,14 @@
             }
 
             /* 피트니스 모드 모바일 */
+            body[data-timer-style="fitness"] .time-group {
+                margin-bottom: 4px;
+            }
+            body[data-timer-style="fitness"] .progress-container {
+                margin-top: 10px;
+            }
             .fitness-wrap {
-                align-items: stretch;
+                align-items: center;
                 gap: 8px;
             }
 
@@ -1404,7 +1410,7 @@
             .fitness-info {
                 flex: 1;
                 min-width: 0;
-                justify-content: center;
+                justify-content: flex-start;
                 gap: 8px;
                 padding: 0;
             }
@@ -1414,7 +1420,7 @@
                 width: 100%;
                 display: flex;
                 flex-direction: column;
-                gap: 5px;
+                gap: 8px;
             }
 
             .fitness-next-top {
@@ -1425,30 +1431,36 @@
             }
 
             .fitness-next-top .fitness-total {
-                font-size: 1.05em;
+                font-size: 1.2em;
                 text-align: left;
                 white-space: nowrap;
                 padding: 0;
             }
 
+            .fitness-next {
+                color: inherit;
+                font-size: 1em;
+            }
+
             .fitness-next-text {
-                font-size: 1.35em;
+                font-size: 2.0em;
                 font-weight: bold;
-                color: #4a90d9;
+                color: #636e72;
                 line-height: 1.2;
                 white-space: nowrap;
+                padding-left: 10px;
             }
 
             .fitness-current {
                 flex: none;
                 display: flex;
                 align-items: center;
-                justify-content: center;
+                justify-content: flex-start;
                 width: 100%;
                 box-sizing: border-box;
-                font-size: 1.9em;
+                font-size: 2.0em;
                 padding: 6px 10px;
-                text-align: center;
+                text-align: left;
                 white-space: nowrap;
             }
         }
@@ -2418,11 +2430,11 @@
 
         // 피트니스 스타일: 현재 인클라인+속도, 다음 단계 인클라인+속도
         document.getElementById('fitnessCurrent').textContent =
-            `${stage.incline || 0} for ${nowSpeedNum.toFixed(1)}km/h`;
+            `경사${stage.incline || 0}  속도${nowSpeedNum.toFixed(1)}`;
         if (index + 1 < routine.length) {
             const nx = routine[index + 1];
             document.getElementById('fitnessNext').textContent =
-                `incline ${nx.incline || 0}, ${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}km/h`;
+                `경사${nx.incline || 0}  속도${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}`;
         } else {
             document.getElementById('fitnessNext').textContent = '마지막 단계';
         }
@@ -2867,7 +2879,7 @@
         document.getElementById('currentSpeed').innerText = "0.0 km/h";
         document.getElementById('fitnessCurrent').textContent = '대기 중';
         document.getElementById('fitnessNext').textContent = routine[0]
-            ? `incline ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h` : '--';
+            ? `경사${routine[0].incline || 0}  속도${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}` : '--';
         const firstPhaseDur = (routine[0] && routine[0].duration) || 1;
         updateTimeDisplay('phase', firstPhaseDur, firstPhaseDur);
         updateTimeDisplay('total', totalDuration, totalDuration);
@@ -3641,7 +3653,7 @@
     updateTimeDisplay('total', totalDuration, totalDuration);
     if (routine[0]) {
         document.getElementById('fitnessNext').textContent =
-            `incline ${routine[0].incline || 0}, ${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}km/h`;
+            `경사${routine[0].incline || 0}  속도${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}`;
     }
     loadProgress();
     if (pausedElapsedMs > 0 && pausedElapsedMs < totalDuration * 1000) {

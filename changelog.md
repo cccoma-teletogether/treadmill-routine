@@ -1,9 +1,5 @@
-[TASK-073] 2026-06-19 피트니스 모드 하단 공백 제거
-- fitness-info align-self: center + justify-content: flex-start (내용 크기만큼 높이 고정)
-- fitness-wrap align-items: center 복원
-
 [TASK-072] 2026-06-19 설정 탭 모바일 하단 스크롤 버그 수정
-- padding-bottom: 100px 추가 (480px 이하 미디어 쿼리 포함)
+- padding-bottom: 100px 추가 (브라우저 하단 바에 가려지는 문제 해결)
 
 [TASK-071] 2026-06-19 루틴 목록 속도 표시 버그 수정
 - renderRoutineList에서 speedSettings 배율 미반영 버그 수정

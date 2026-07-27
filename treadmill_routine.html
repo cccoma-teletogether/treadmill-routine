@@ -2542,10 +2542,10 @@
     function renderMusicList() {
         const list = getMusicList();
         const container = document.getElementById('musicListItems');
-        if (!list.length) { container.innerHTML = '<div style="font-size:0.82em;color:#999;padding:2px 0">저장된 음악 없음</div>'; return; }
+        if (!list.length) { container.innerHTML = '<div style="font-size:0.82em;color:#999;padding:2px 0">저장된 음악 없음 — 📂로 파일 추가</div>'; return; }
         container.innerHTML = list.map((item, i) => `
             <div class="music-list-item">
-                <span class="music-list-name" title="${escHtml(item.url)}" onclick="applyMusicFromList(${i})">♪ ${escHtml(item.name)}</span>
+                <span class="music-list-name" title="${escHtml(item.url || item.name)}" onclick="applyMusicFromList(${i})">${item.type === 'file' ? '📁' : '🔗'} ${escHtml(item.name)}</span>
                 <button class="btn-music" style="padding:3px 8px;font-size:0.78em" onclick="applyMusicFromList(${i})">적용</button>
                 <button class="btn-music" style="padding:3px 7px;font-size:0.78em;background:#e74c3c;color:white" onclick="deleteMusicUrl(${i})">×</button>
             </div>`).join('');
@@ -2573,20 +2573,41 @@
 
     function deleteMusicUrl(idx) {
         const list = getMusicList();
+        const item = list[idx];
+        if (item && item.type === 'file' && item.key) {
+            musicDbDelete(item.key).catch(() => {});
+        }
         list.splice(idx, 1);
         saveMusicList(list);
         renderMusicList();
     }
 
-    function applyMusicFromList(idx) {
+    async function applyMusicFromList(idx) {
         const list = getMusicList();
         if (idx < 0 || idx >= list.length) return;
-        const { url } = list[idx];
+        const item = list[idx];
         document.getElementById('musicListPanel').style.display = 'none';
-        const ytId = extractYouTubeId(url);
-        if (ytId) applyYouTube(ytId);
-        else applyDirectUrl(url);
-        try { localStorage.setItem('treadmill_music_url', url); } catch(e) {}
+        if (item.type === 'file') {
+            const saved = await musicDbGet(item.key);
+            if (!saved) {
+                document.getElementById('statusLine').innerText = `파일을 찾을 수 없습니다: ${item.name}`;
+                return;
+            }
+            const blob = new Blob([saved.data], { type: saved.type });
+            destroyYtPlayer();
+            musicSource = 'file';
+            applyMusic(blob, item.name);
+            try { localStorage.removeItem('treadmill_music_url'); } catch(e) {}
+            try { localStorage.setItem('treadmill_music_last_file_key', item.key); } catch(e) {}
+            document.getElementById('statusLine').innerText = `음악: ${item.name}`;
+        } else {
+            const { url } = item;
+            const ytId = extractYouTubeId(url);
+            if (ytId) applyYouTube(ytId);
+            else applyDirectUrl(url);
+            try { localStorage.setItem('treadmill_music_url', url); } catch(e) {}
+            try { localStorage.removeItem('treadmill_music_last_file_key'); } catch(e) {}
+        }
         if (!bgMusicEnabled) toggleBgMusic();
     }
 
@@ -2656,26 +2677,39 @@
         });
     }
 
-    async function musicDbPut(file) {
-        // File 객체를 그대로 저장하면 일부 브라우저(안드로이드 content:// 파일 등)에서
-        // 복제 실패나 유실이 생긴다 — 실제 바이트를 복사해서 저장
-        const data = await file.arrayBuffer();
-        const record = { name: file.name, type: file.type || 'audio/mpeg', data };
+    async function musicDbPut(fileOrRecord, key = 'bgm') {
+        let record;
+        if (fileOrRecord instanceof File || fileOrRecord instanceof Blob) {
+            const data = await fileOrRecord.arrayBuffer();
+            record = { name: fileOrRecord.name, type: fileOrRecord.type || 'audio/mpeg', data };
+        } else {
+            record = fileOrRecord;
+        }
         const db = await musicDbOpen();
         return new Promise((resolve, reject) => {
             const tx = db.transaction('files', 'readwrite');
-            tx.objectStore('files').put(record, 'bgm');
+            tx.objectStore('files').put(record, key);
             tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         });
     }
 
-    async function musicDbGet() {
+    async function musicDbGet(key = 'bgm') {
         const db = await musicDbOpen();
         return new Promise((resolve, reject) => {
-            const req = db.transaction('files', 'readonly').objectStore('files').get('bgm');
+            const req = db.transaction('files', 'readonly').objectStore('files').get(key);
             req.onsuccess = () => resolve(req.result || null);
             req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function musicDbDelete(key) {
+        const db = await musicDbOpen();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('files', 'readwrite');
+            tx.objectStore('files').delete(key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
         });
     }
 
@@ -2690,10 +2724,18 @@
         destroyYtPlayer();
         musicSource = 'file';
         try { localStorage.removeItem('treadmill_music_url'); } catch(e) {}
-        document.getElementById('musicUrlInput').value = '';
         applyMusic(file, file.name);
+        const key = 'bgm_' + Date.now();
         let savedMsg = `음악: ${file.name} (저장됨)`;
-        try { await musicDbPut(file); } catch (e) { savedMsg = `음악: ${file.name} (저장 실패 — 이번만 사용)`; }
+        try {
+            await musicDbPut(file, key);
+            const list = getMusicList();
+            if (!list.find(item => item.type === 'file' && item.name === file.name)) {
+                list.push({ type: 'file', name: file.name, key });
+                saveMusicList(list);
+            }
+            try { localStorage.setItem('treadmill_music_last_file_key', key); } catch(e) {}
+        } catch (e) { savedMsg = `음악: ${file.name} (저장 실패 — 이번만 사용)`; }
         document.getElementById('statusLine').innerText = savedMsg;
         if (!bgMusicEnabled) toggleBgMusic();
     }
@@ -2730,19 +2772,42 @@
             }
         } catch(e) {}
 
-        // 파일 복원 (URL 없을 때)
+        // 마지막 파일 키로 복원
         try {
-            const saved = await musicDbGet();
-            if (!saved) return;
-            let blob, name;
-            if (saved instanceof Blob) {
-                blob = saved;
-                name = saved.name || '저장된 음악';
-            } else {
-                blob = new Blob([saved.data], { type: saved.type });
-                name = saved.name;
+            const lastKey = localStorage.getItem('treadmill_music_last_file_key');
+            if (lastKey) {
+                const saved = await musicDbGet(lastKey);
+                if (saved) {
+                    const blob = new Blob([saved.data], { type: saved.type });
+                    applyMusic(blob, saved.name);
+                    musicSource = 'file';
+                    try {
+                        if (localStorage.getItem('treadmill_music_on') === '1') {
+                            bgMusicEnabled = true;
+                            setMusicButtonOn(true);
+                        }
+                    } catch(e) {}
+                    return;
+                }
             }
+        } catch(e) {}
+
+        // 구버전 'bgm' 키 복원 및 목록으로 마이그레이션
+        try {
+            const saved = await musicDbGet('bgm');
+            if (!saved) return;
+            const name = saved.name || '저장된 음악';
+            const blob = new Blob([saved.data], { type: saved.type });
             applyMusic(blob, name);
+            musicSource = 'file';
+            const migKey = 'bgm_migrated';
+            const list = getMusicList();
+            if (!list.find(item => item.type === 'file' && item.key === migKey)) {
+                list.push({ type: 'file', name, key: migKey });
+                saveMusicList(list);
+                await musicDbPut(saved, migKey);
+                try { localStorage.setItem('treadmill_music_last_file_key', migKey); } catch(e) {}
+            }
             try {
                 if (localStorage.getItem('treadmill_music_on') === '1' && !bgMusicEnabled) {
                     bgMusicEnabled = true;

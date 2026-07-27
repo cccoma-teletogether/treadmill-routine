@@ -2608,7 +2608,8 @@
             try { localStorage.setItem('treadmill_music_url', url); } catch(e) {}
             try { localStorage.removeItem('treadmill_music_last_file_key'); } catch(e) {}
         }
-        if (!bgMusicEnabled) toggleBgMusic();
+        if (bgMusicEnabled) bgMusicPlay();
+        else toggleBgMusic();
     }
 
     function applyDirectUrl(url) {

@@ -640,14 +640,37 @@
             flex-shrink: 0;
         }
 
-        .music-url-row {
+        .music-list-panel {
             display: none;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.04);
+            border-radius: 8px;
+        }
+        .music-list-item {
+            display: flex;
             align-items: center;
             gap: 6px;
-            margin-top: 6px;
-            padding: 4px 12px;
+            font-size: 0.85em;
         }
-        .music-url-row input {
+        .music-list-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .music-list-add {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            border-top: 1px solid #ddd;
+            padding-top: 6px;
+        }
+        .music-list-add input {
             flex: 1;
             padding: 5px 8px;
             border: 1px solid #ccc;
@@ -791,7 +814,9 @@
             .music-control { background: rgba(255,255,255,0.06); }
             .btn-music { background: #3a3a3e; color: #e0e0e0; }
             .music-label { color: #b0b0b0; }
-            .music-url-row input { background: #2a2a2e; color: #e0e0e0; border-color: #555; }
+            .music-list-panel { background: rgba(255,255,255,0.06); }
+            .music-list-add { border-top-color: #444; }
+            .music-list-add input { background: #2a2a2e; color: #e0e0e0; border-color: #555; }
         }
 
         .status-line {
@@ -1566,14 +1591,17 @@
         <div class="music-control">
             <button class="btn-music" id="btnMusicToggle" onclick="toggleBgMusic()">🎵 음악</button>
             <button class="btn-music" onclick="document.getElementById('musicFileInput').click()" title="음악 파일 선택">📂</button>
-            <button class="btn-music" onclick="toggleUrlInput()" title="URL / YouTube 주소로 음악 설정">🔗</button>
+            <button class="btn-music" onclick="toggleMusicList()" title="음악 URL 목록 관리">🔗</button>
             <span class="music-label">볼륨</span>
             <input type="range" class="music-volume" id="musicVolume" min="0" max="1" step="0.05" value="0.3" oninput="setBgMusicVolume(this.value)">
             <input type="file" id="musicFileInput" accept="audio/*,video/mp4" style="display: none;" onchange="onMusicFileSelected(this.files[0])">
         </div>
-        <div class="music-url-row" id="musicUrlRow">
-            <input type="text" id="musicUrlInput" placeholder="YouTube 또는 음악 파일 URL 붙여넣기" onkeydown="if(event.key==='Enter')applyMusicUrl()">
-            <button class="btn-music" onclick="applyMusicUrl()">적용</button>
+        <div class="music-list-panel" id="musicListPanel">
+            <div id="musicListItems"></div>
+            <div class="music-list-add">
+                <input type="text" id="musicUrlInput" placeholder="YouTube 또는 음악 파일 URL 붙여넣기" onkeydown="if(event.key==='Enter')addMusicUrl()">
+                <button class="btn-music" onclick="addMusicUrl()">+ 추가</button>
+            </div>
         </div>
         <div id="ytPlayerContainer">
             <div id="ytPlayerEl"></div>
@@ -2480,23 +2508,84 @@
         return m ? m[1] : null;
     }
 
-    function toggleUrlInput() {
-        const row = document.getElementById('musicUrlRow');
-        const visible = row.style.display === 'flex';
-        row.style.display = visible ? 'none' : 'flex';
-        if (!visible) document.getElementById('musicUrlInput').focus();
+    function getMusicList() {
+        try {
+            const raw = localStorage.getItem('treadmill_music_list');
+            if (raw) return JSON.parse(raw);
+        } catch(e) {}
+        try {
+            const old = localStorage.getItem('treadmill_music_url');
+            if (old) return [{ name: deriveMusicName(old), url: old }];
+        } catch(e) {}
+        return [];
     }
 
-    function applyMusicUrl() {
+    function saveMusicList(list) {
+        try { localStorage.setItem('treadmill_music_list', JSON.stringify(list)); } catch(e) {}
+    }
+
+    function deriveMusicName(url) {
+        const ytId = extractYouTubeId(url);
+        if (ytId) return `YouTube: ${ytId}`;
+        try {
+            const parts = new URL(url).pathname.split('/');
+            const filename = parts[parts.length - 1];
+            if (filename) return decodeURIComponent(filename);
+        } catch(e) {}
+        return url.length > 40 ? url.slice(0, 37) + '...' : url;
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderMusicList() {
+        const list = getMusicList();
+        const container = document.getElementById('musicListItems');
+        if (!list.length) { container.innerHTML = '<div style="font-size:0.82em;color:#999;padding:2px 0">저장된 음악 없음</div>'; return; }
+        container.innerHTML = list.map((item, i) => `
+            <div class="music-list-item">
+                <span class="music-list-name" title="${escHtml(item.url)}" onclick="applyMusicFromList(${i})">♪ ${escHtml(item.name)}</span>
+                <button class="btn-music" style="padding:3px 8px;font-size:0.78em" onclick="applyMusicFromList(${i})">적용</button>
+                <button class="btn-music" style="padding:3px 7px;font-size:0.78em;background:#e74c3c;color:white" onclick="deleteMusicUrl(${i})">×</button>
+            </div>`).join('');
+    }
+
+    function toggleMusicList() {
+        const panel = document.getElementById('musicListPanel');
+        const visible = panel.style.display === 'flex';
+        panel.style.display = visible ? 'none' : 'flex';
+        if (!visible) { renderMusicList(); document.getElementById('musicUrlInput').focus(); }
+    }
+
+    function addMusicUrl() {
         const url = document.getElementById('musicUrlInput').value.trim();
         if (!url) return;
-        document.getElementById('musicUrlRow').style.display = 'none';
-        const ytId = extractYouTubeId(url);
-        if (ytId) {
-            applyYouTube(ytId);
-        } else {
-            applyDirectUrl(url);
+        const list = getMusicList();
+        if (!list.find(item => item.url === url)) {
+            list.push({ name: deriveMusicName(url), url });
+            saveMusicList(list);
         }
+        const idx = list.findIndex(item => item.url === url);
+        document.getElementById('musicUrlInput').value = '';
+        applyMusicFromList(idx);
+    }
+
+    function deleteMusicUrl(idx) {
+        const list = getMusicList();
+        list.splice(idx, 1);
+        saveMusicList(list);
+        renderMusicList();
+    }
+
+    function applyMusicFromList(idx) {
+        const list = getMusicList();
+        if (idx < 0 || idx >= list.length) return;
+        const { url } = list[idx];
+        document.getElementById('musicListPanel').style.display = 'none';
+        const ytId = extractYouTubeId(url);
+        if (ytId) applyYouTube(ytId);
+        else applyDirectUrl(url);
         try { localStorage.setItem('treadmill_music_url', url); } catch(e) {}
         if (!bgMusicEnabled) toggleBgMusic();
     }
@@ -2628,7 +2717,6 @@
         try {
             const savedUrl = localStorage.getItem('treadmill_music_url');
             if (savedUrl) {
-                document.getElementById('musicUrlInput').value = savedUrl;
                 const ytId = extractYouTubeId(savedUrl);
                 if (ytId) applyYouTube(ytId);
                 else applyDirectUrl(savedUrl);

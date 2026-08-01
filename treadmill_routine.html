@@ -414,6 +414,41 @@
         /* 피트니스 모드: 속도 표시 박스는 fitness-current에 이미 표시되므로 숨김 */
         body[data-timer-style="fitness"] .speed-display { display: none !important; }
 
+        /* === 메트로놈 탭 === */
+        #metronomeTab { text-align: center; padding: 20px 16px; }
+        .metro-elapsed {
+            font-size: 4.5em;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+            margin: 16px 0 8px;
+        }
+        .metro-bpm-label { font-size: 1.1em; color: #636e72; margin-bottom: 24px; }
+        .metro-announce-label { font-size: 0.85em; color: #999; margin-top: 12px; }
+        .btn-metro-start {
+            padding: 14px 44px;
+            font-size: 1.2em;
+            background: var(--color-accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 4px;
+        }
+        .btn-metro-reset {
+            padding: 14px 24px;
+            font-size: 1.2em;
+            background: #b2bec3;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 4px;
+        }
+        @media (prefers-color-scheme: dark) {
+            .btn-metro-reset { background: #444; }
+        }
+
         /* === 피트니스 파이 다이얼 === */
         .fitness-wrap {
             display: flex;
@@ -1509,6 +1544,7 @@
     <button class="tab-button" onclick="switchTab('settings')">⚙️ 설정</button>
     <button class="tab-button" onclick="switchTab('manage')">📝 루틴관리</button>
     <button class="tab-button" onclick="switchTab('changelog')">📋 변경이력</button>
+    <button class="tab-button" onclick="switchTab('metronome')">🥁 메트로놈</button>
 </div>
 
 <div class="wrapper">
@@ -1724,6 +1760,16 @@
         </div>
         <div class="changelog-content" id="changelogContent">불러오는 중...</div>
     </div>
+
+    <div class="container" id="metronomeTab">
+        <div class="metro-elapsed" id="metroElapsed">00:00</div>
+        <div class="metro-bpm-label">180 BPM · 클릭 메트로놈</div>
+        <div>
+            <button class="btn-metro-start" id="btnMetro" onclick="toggleMetronome()">▶ 시작</button>
+            <button class="btn-metro-reset" onclick="resetMetronome()">↺ 초기화</button>
+        </div>
+        <div class="metro-announce-label">5분마다 경과 시간을 음성으로 알려드립니다</div>
+    </div>
 </div>
 
 <!-- 스크립트보다 먼저 선언해야 초기화 코드(음악 복원 등)가 요소를 찾을 수 있다 -->
@@ -1911,13 +1957,16 @@
             document.getElementById('settingsTab').classList.toggle('active', tabName === 'settings');
             document.getElementById('manageTab').classList.toggle('active', tabName === 'manage');
             document.getElementById('changelogTab').classList.toggle('active', tabName === 'changelog');
+            document.getElementById('metronomeTab').classList.toggle('active', tabName === 'metronome');
         } else {
-            // 데스크톱: timer와 routine은 항상 표시
+            // 데스크톱: timer는 항상 표시, 오른쪽 패널은 탭에 따라 전환
+            const rightTab = ['settings', 'manage', 'changelog', 'metronome'].includes(tabName) ? tabName : 'routine';
             document.getElementById('timerTab').classList.add('active');
-            document.getElementById('routineTab').classList.add('active');
-            document.getElementById('settingsTab').classList.toggle('active', tabName === 'settings');
-            document.getElementById('manageTab').classList.toggle('active', tabName === 'manage');
-            document.getElementById('changelogTab').classList.toggle('active', tabName === 'changelog');
+            document.getElementById('routineTab').classList.toggle('active', rightTab === 'routine');
+            document.getElementById('settingsTab').classList.toggle('active', rightTab === 'settings');
+            document.getElementById('manageTab').classList.toggle('active', rightTab === 'manage');
+            document.getElementById('changelogTab').classList.toggle('active', rightTab === 'changelog');
+            document.getElementById('metronomeTab').classList.toggle('active', rightTab === 'metronome');
         }
 
         document.querySelectorAll('.tab-button').forEach((btn, idx) => {
@@ -1926,12 +1975,13 @@
                 (idx === 1 && tabName === 'routine') ||
                 (idx === 2 && tabName === 'settings') ||
                 (idx === 3 && tabName === 'manage') ||
-                (idx === 4 && tabName === 'changelog')
+                (idx === 4 && tabName === 'changelog') ||
+                (idx === 5 && tabName === 'metronome')
             );
         });
 
         // 탭 전환 시 스크롤 위치를 항상 맨 위로 초기화
-        ['timerTab', 'routineTab', 'settingsTab', 'manageTab', 'changelogTab'].forEach(id => {
+        ['timerTab', 'routineTab', 'settingsTab', 'manageTab', 'changelogTab', 'metronomeTab'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.scrollTop = 0;
         });
@@ -2485,6 +2535,89 @@
         }
 
         updateRoutineListHighlight();
+    }
+
+    // ===== 메트로놈 =====
+    let metronomeRunning = false;
+    let metronomeStartTime = 0;
+    let metronomeElapsedSec = 0;
+    let metronomeTimerInterval = null;
+    let metronomeScheduleInterval = null;
+    let metronomeNextBeatTime = 0;
+    const METRO_BEAT_SEC = 60 / 180; // 180 BPM
+    let _clickBuffer = null;
+
+    function createClickBuffer() {
+        if (!audioCtx) return null;
+        const sr = audioCtx.sampleRate;
+        const bufSize = Math.floor(sr * 0.05); // 50ms
+        const buffer = audioCtx.createBuffer(1, bufSize, sr);
+        const data = buffer.getChannelData(0);
+        // Harmonic components measured from reference audio
+        const components = [
+            { f: 1012, a: 1.000 },
+            { f: 1798, a: 0.258 },
+            { f: 754,  a: 0.221 },
+            { f: 2143, a: 0.145 },
+            { f: 1260, a: 0.140 },
+        ];
+        for (let i = 0; i < bufSize; i++) {
+            const t = i / sr;
+            const env = Math.exp(-t * 80);
+            let s = 0;
+            for (const c of components) s += Math.sin(2 * Math.PI * c.f * t) * c.a;
+            data[i] = s * env * 0.15;
+        }
+        return buffer;
+    }
+
+    function scheduleMetronomeBeats() {
+        if (!metronomeRunning || !audioCtx) return;
+        if (!_clickBuffer) _clickBuffer = createClickBuffer();
+        const now = audioCtx.currentTime;
+        const lookahead = 0.15;
+        while (metronomeNextBeatTime < now + lookahead) {
+            const src = audioCtx.createBufferSource();
+            src.buffer = _clickBuffer;
+            src.connect(audioCtx.destination);
+            src.start(metronomeNextBeatTime);
+            metronomeNextBeatTime += METRO_BEAT_SEC;
+        }
+    }
+
+    function toggleMetronome() {
+        if (metronomeRunning) {
+            metronomeRunning = false;
+            clearInterval(metronomeScheduleInterval);
+            clearInterval(metronomeTimerInterval);
+            document.getElementById('btnMetro').textContent = '▶ 시작';
+        } else {
+            ensureAudioCtx();
+            metronomeRunning = true;
+            metronomeStartTime = Date.now() - metronomeElapsedSec * 1000;
+            metronomeNextBeatTime = audioCtx.currentTime + 0.05;
+            metronomeScheduleInterval = setInterval(scheduleMetronomeBeats, 25);
+            metronomeTimerInterval = setInterval(() => {
+                metronomeElapsedSec = Math.floor((Date.now() - metronomeStartTime) / 1000);
+                const m = Math.floor(metronomeElapsedSec / 60);
+                const s = metronomeElapsedSec % 60;
+                document.getElementById('metroElapsed').textContent =
+                    String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                if (metronomeElapsedSec > 0 && metronomeElapsedSec % 300 === 0) {
+                    speak(`${m}분 지났습니다`);
+                }
+            }, 1000);
+            document.getElementById('btnMetro').textContent = '⏸ 정지';
+        }
+    }
+
+    function resetMetronome() {
+        metronomeRunning = false;
+        clearInterval(metronomeScheduleInterval);
+        clearInterval(metronomeTimerInterval);
+        metronomeElapsedSec = 0;
+        document.getElementById('metroElapsed').textContent = '00:00';
+        document.getElementById('btnMetro').textContent = '▶ 시작';
     }
 
     // ===== 배경음악 제어 =====

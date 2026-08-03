@@ -478,37 +478,148 @@
             flex: 1;  /* 파이 차트 제외 나머지 공간 차지 */
         }
 
-        .fitness-next {
-            color: #4a90d9;
-            font-weight: bold;
-            font-size: 1.05em;
-            word-break: normal;
-            overflow-wrap: anywhere;
-            max-width: 100%;
+        .next-badge {
+            background: #b2bec3;
+            color: white;
+            font-weight: 700;
+            font-size: 0.72em;
+            padding: 2px 7px;
+            border-radius: 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0.05em;
         }
 
-        .next-badge {
-            background: #4a90d9;
-            color: white;
-            font-weight: bold;
-            font-size: 0.8em;
+        .now-badge {
+            background: #dce8f5;
+            color: #2d6fad;
+            font-weight: 700;
+            font-size: 0.72em;
             padding: 2px 7px;
-            border-radius: 3px;
-            margin-right: 2px;
+            border-radius: 4px;
             white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0.05em;
+        }
+
+        /* Option C: 경사 블록 + 속도 영웅형 */
+        .fitness-now-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .fitness-total {
+            font-size: 0.78em;
+            color: #636e72;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .fitness-c-now {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+            border: 2px solid #4a90d9;
+            border-radius: 10px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .fitness-c-incline-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #4a90d9;
+            padding: 8px 12px;
+            gap: 2px;
             flex-shrink: 0;
         }
 
-        .fitness-current {
-            background: #4a90d9;
+        .fitness-c-incline-num {
+            font-size: 1.6em;
+            font-weight: 800;
             color: white;
-            font-weight: bold;
-            font-size: 1.55em;
-            padding: 6px 12px;
-            border-radius: 5px;
-            line-height: 1.2;
-            max-width: 100%;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
+        .fitness-c-incline-lbl {
+            font-size: 0.6em;
+            font-weight: 600;
+            color: rgba(255,255,255,0.75);
+            letter-spacing: 0.05em;
+        }
+
+        .fitness-c-speed-block {
+            flex: 1;
+            display: flex;
+            align-items: baseline;
+            padding: 8px 12px;
+            gap: 3px;
+            background: #eaf2fc;
+        }
+
+        .fitness-c-speed-num {
+            font-size: 2.6em;
+            font-weight: 800;
+            color: #4a90d9;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .fitness-c-speed-unit {
+            font-size: 0.7em;
+            color: #636e72;
+            font-weight: 600;
+            align-self: flex-end;
+            padding-bottom: 4px;
+        }
+
+        .fitness-c-next {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 6px 10px;
+            background: #f0f4f8;
+            border: 1.5px solid #d0dae6;
+            border-radius: 8px;
             box-sizing: border-box;
+        }
+
+        .fitness-c-next-vals {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .fitness-c-next-item {
+            display: flex;
+            align-items: baseline;
+            gap: 3px;
+        }
+
+        .fitness-c-next-lbl {
+            font-size: 0.65em;
+            color: #8a9bb0;
+        }
+
+        .fitness-c-next-val {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #6b7c93;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .fitness-c-next-sep {
+            color: #b2bec3;
+            font-size: 0.9em;
         }
 
         .fitness-pie-bg { fill: #4a90d9; }
@@ -544,8 +655,16 @@
 
         @media (prefers-color-scheme: dark) {
             .fitness-pie-elapsed { fill: rgba(0, 0, 0, 0.5); }
-            .fitness-total { color: #b0b0b0; }
-            .fitness-total span { color: #e0e0e0; }
+            .fitness-total { color: #8a9bb0; }
+            .fitness-total span { color: #c0cfe0; }
+            .now-badge { background: #1a3050; color: #7ab8f5; }
+            .fitness-c-speed-block { background: #1a2f4a; }
+            .fitness-c-speed-num { color: #7ab8f5; }
+            .fitness-c-next { background: #1e2c3e; border-color: #2e4060; }
+            .fitness-c-next-val { color: #7a93b0; }
+            .fitness-c-next-lbl { color: #5a7090; }
+            .fitness-c-next-sep { color: #3a5070; }
+            .next-badge { background: #2e4060; }
         }
 
         .style-picker {
@@ -1437,57 +1556,16 @@
                 padding: 0;
             }
 
-            .fitness-next {
-                flex: none;
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
+            .fitness-c-incline-num {
+                font-size: 1.4em;
             }
 
-            .fitness-next-top {
-                display: flex;
-                align-items: center;
-                width: 100%;
-                gap: 6px;
+            .fitness-c-speed-num {
+                font-size: 2.2em;
             }
 
-            .fitness-next-top .fitness-total {
-                font-size: 1.2em;
-                text-align: left;
-                white-space: nowrap;
-                padding: 0;
-            }
-
-            .fitness-next {
-                color: inherit;
-                font-size: 1em;
-            }
-
-            .fitness-next-text {
-                font-size: 2.0em;
-                font-weight: bold;
-                color: #636e72;
-                line-height: 1.2;
-                white-space: nowrap;
-                padding: 6px 10px;
-                width: 100%;
-                box-sizing: border-box;
-                border: 2px solid #b2bec3;
-                border-radius: 5px;
-            }
-
-            .fitness-current {
-                flex: none;
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-                width: 100%;
-                box-sizing: border-box;
-                font-size: 2.0em;
-                padding: 6px 10px;
-                text-align: left;
-                white-space: nowrap;
+            .fitness-total {
+                font-size: 0.82em;
             }
         }
     </style>
@@ -1560,14 +1638,34 @@
                     <text x="60" y="76" class="fitness-time-label">단계 남은시간</text>
                 </svg>
                 <div class="fitness-info">
-                    <div class="fitness-next">
-                        <div class="fitness-next-top">
-                            <span class="next-badge">NEXT</span>
-                            <span class="fitness-total">전체 남은: <span id="fitnessTotalDisp">40:00</span></span>
-                        </div>
-                        <div class="fitness-next-text" id="fitnessNext">--</div>
+                    <div class="fitness-now-top">
+                        <span class="now-badge">NOW</span>
+                        <span class="fitness-total">전체 남은: <span id="fitnessTotalDisp">40:00</span></span>
                     </div>
-                    <div class="fitness-current" id="fitnessCurrent">대기 중</div>
+                    <div class="fitness-c-now">
+                        <div class="fitness-c-incline-block">
+                            <div class="fitness-c-incline-num" id="fitnessCurrentIncline">--</div>
+                            <div class="fitness-c-incline-lbl">경사</div>
+                        </div>
+                        <div class="fitness-c-speed-block">
+                            <span class="fitness-c-speed-num" id="fitnessCurrentSpeed">대기</span>
+                            <span class="fitness-c-speed-unit" id="fitnessSpeedUnit"></span>
+                        </div>
+                    </div>
+                    <div class="fitness-c-next">
+                        <span class="next-badge">NEXT</span>
+                        <div class="fitness-c-next-vals">
+                            <span class="fitness-c-next-item">
+                                <span class="fitness-c-next-lbl">경사</span>
+                                <span class="fitness-c-next-val" id="fitnessNextIncline">--</span>
+                            </span>
+                            <span class="fitness-c-next-sep">·</span>
+                            <span class="fitness-c-next-item">
+                                <span class="fitness-c-next-val" id="fitnessNextSpeed">--</span>
+                                <span class="fitness-c-next-lbl">km/h</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2280,8 +2378,11 @@
             bgMusicStop();
             document.getElementById('currentPhase').innerText = "운동 완료!";
             document.getElementById('currentSpeed').innerText = "수고하셨습니다 💦";
-            document.getElementById('fitnessCurrent').textContent = '완료!';
-            document.getElementById('fitnessNext').textContent = '--';
+            document.getElementById('fitnessCurrentIncline').textContent = '--';
+            document.getElementById('fitnessCurrentSpeed').textContent = '완료';
+            document.getElementById('fitnessSpeedUnit').textContent = '';
+            document.getElementById('fitnessNextIncline').textContent = '--';
+            document.getElementById('fitnessNextSpeed').textContent = '--';
             updateTimeDisplay('phase', 0, 1);
             updateTimeDisplay('total', 0, totalDuration);
             document.getElementById('nextPhase').innerHTML = "오늘의 유산소 루틴을 성공적으로 마쳤습니다!";
@@ -2346,14 +2447,16 @@
         document.getElementById('currentSpeed').innerText = speedText;
 
         // 피트니스 스타일: 현재 인클라인+속도, 다음 단계 인클라인+속도
-        document.getElementById('fitnessCurrent').textContent =
-            `경사${stage.incline || 0}  속도${nowSpeedNum.toFixed(1)}`;
+        document.getElementById('fitnessCurrentIncline').textContent = `${stage.incline || 0}°`;
+        document.getElementById('fitnessCurrentSpeed').textContent = nowSpeedNum.toFixed(1);
+        document.getElementById('fitnessSpeedUnit').textContent = 'km/h';
         if (index + 1 < routine.length) {
             const nx = routine[index + 1];
-            document.getElementById('fitnessNext').textContent =
-                `경사${nx.incline || 0}  속도${getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1)}`;
+            document.getElementById('fitnessNextIncline').textContent = `${nx.incline || 0}°`;
+            document.getElementById('fitnessNextSpeed').textContent = getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1);
         } else {
-            document.getElementById('fitnessNext').textContent = '마지막 단계';
+            document.getElementById('fitnessNextIncline').textContent = '--';
+            document.getElementById('fitnessNextSpeed').textContent = '마지막';
         }
         updateTimeDisplay('phase', phaseSecLeft, stage.duration);
         updateTimeDisplay('total', totalSecLeft, totalDuration);
@@ -3003,9 +3106,16 @@
         clearProgress();
         document.getElementById('currentPhase').innerText = "대기 중";
         document.getElementById('currentSpeed').innerText = "0.0 km/h";
-        document.getElementById('fitnessCurrent').textContent = '대기 중';
-        document.getElementById('fitnessNext').textContent = routine[0]
-            ? `경사${routine[0].incline || 0}  속도${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}` : '--';
+        document.getElementById('fitnessCurrentIncline').textContent = '--';
+        document.getElementById('fitnessCurrentSpeed').textContent = '대기';
+        document.getElementById('fitnessSpeedUnit').textContent = '';
+        if (routine[0]) {
+            document.getElementById('fitnessNextIncline').textContent = `${routine[0].incline || 0}°`;
+            document.getElementById('fitnessNextSpeed').textContent = getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1);
+        } else {
+            document.getElementById('fitnessNextIncline').textContent = '--';
+            document.getElementById('fitnessNextSpeed').textContent = '--';
+        }
         const firstPhaseDur = (routine[0] && routine[0].duration) || 1;
         updateTimeDisplay('phase', firstPhaseDur, firstPhaseDur);
         updateTimeDisplay('total', totalDuration, totalDuration);
@@ -3776,8 +3886,8 @@
     updateTimeDisplay('phase', (routine[0] && routine[0].duration) || 1, (routine[0] && routine[0].duration) || 1);
     updateTimeDisplay('total', totalDuration, totalDuration);
     if (routine[0]) {
-        document.getElementById('fitnessNext').textContent =
-            `경사${routine[0].incline || 0}  속도${getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1)}`;
+        document.getElementById('fitnessNextIncline').textContent = `${routine[0].incline || 0}°`;
+        document.getElementById('fitnessNextSpeed').textContent = getAdjustedSpeed(routine[0].startSpeed, 0).toFixed(1);
     }
     loadProgress();
     if (pausedElapsedMs > 0 && pausedElapsedMs < totalDuration * 1000) {

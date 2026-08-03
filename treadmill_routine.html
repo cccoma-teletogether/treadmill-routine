@@ -1134,44 +1134,6 @@
             border-color: var(--color-info);
         }
 
-        .phase-settings {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-left: 8px;
-        }
-
-        .phase-setting-row {
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .phase-setting-row label {
-            flex: 1;
-            font-size: 0.85em;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        .phase-setting-row input[type="range"] {
-            flex: 1;
-            min-width: 80px;
-            height: 5px;
-            cursor: pointer;
-        }
-
-        .speed-value-display {
-            min-width: 45px;
-            text-align: right;
-            font-weight: bold;
-            color: var(--color-speed);
-            font-size: 0.85em;
-        }
 
         .setting-actions {
             display: flex;
@@ -1719,17 +1681,6 @@
             <button class="btn-save-settings" onclick="saveAsPreset()">새 설정 저장</button>
         </div>
 
-        <h3 style="color: var(--color-primary); font-size: 0.95em; margin: 15px 0 10px 0;">속도 조정</h3>
-        <div id="granularSettings"></div>
-
-        <div class="setting-actions">
-            <button class="btn-reset-settings" onclick="resetSpeedSettings()">현재 설정 초기화</button>
-        </div>
-
-        <div class="current-settings-box" style="margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 0.85em;">
-            <strong>현재 설정:</strong>
-            <div id="currentSettingsDisplay" style="margin-top: 8px;"></div>
-        </div>
 
         <div class="setting-group" style="margin-top: 12px;">
             <label>🔔 알림</label>
@@ -1742,7 +1693,7 @@
 
         <div class="setting-group">
             <label>💾 데이터 백업/복원</label>
-            <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 8px;">커스텀 루틴, 프리셋, 속도 설정, 운동 기록을 JSON 파일로 저장하거나 복원합니다. (음악 파일은 포함되지 않습니다)</div>
+            <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 8px;">커스텀 루틴, 프리셋, 운동 기록을 JSON 파일로 저장하거나 복원합니다. (음악 파일은 포함되지 않습니다)</div>
             <div class="setting-actions">
                 <button class="btn-save-settings" onclick="exportAppData()">내보내기</button>
                 <button class="btn-reset-settings" onclick="document.getElementById('importFileInput').click()">가져오기</button>
@@ -1839,7 +1790,6 @@
     // ===== 상태 변수 =====
     const STORAGE_PREFIX = 'treadmill_';
     const PROGRESS_PREFIX = 'treadmill_progress_';
-    let speedSettings = {};
     let tickInterval = null;
     let startEpochMs = null;
     let pausedElapsedMs = 0;
@@ -1928,10 +1878,7 @@
         document.title = `${routineData.name} 타이머`;
 
         // 상태 초기화
-        speedSettings = {};
-        loadSpeedSettings();
         renderRoutineList();
-        updateCurrentSettingsDisplay();
         updateTimeDisplay('total', totalDuration, totalDuration);
         updateUI();
 
@@ -1960,13 +1907,14 @@
             document.getElementById('metronomeTab').classList.toggle('active', tabName === 'metronome');
         } else {
             // 데스크톱: timer는 항상 표시, 오른쪽 패널은 탭에 따라 전환
+            // .routine-list/.container는 CSS 기본이 flex이므로 style.display로 직접 제어
             const rightTab = ['settings', 'manage', 'changelog', 'metronome'].includes(tabName) ? tabName : 'routine';
             document.getElementById('timerTab').classList.add('active');
-            document.getElementById('routineTab').classList.toggle('active', rightTab === 'routine');
+            document.getElementById('routineTab').style.display = rightTab === 'routine' ? '' : 'none';
             document.getElementById('settingsTab').classList.toggle('active', rightTab === 'settings');
             document.getElementById('manageTab').classList.toggle('active', rightTab === 'manage');
             document.getElementById('changelogTab').classList.toggle('active', rightTab === 'changelog');
-            document.getElementById('metronomeTab').classList.toggle('active', rightTab === 'metronome');
+            document.getElementById('metronomeTab').style.display = rightTab === 'metronome' ? 'flex' : 'none';
         }
 
         document.querySelectorAll('.tab-button').forEach((btn, idx) => {
@@ -1987,9 +1935,7 @@
         });
         window.scrollTo(0, 0);
 
-        if (tabName === 'settings') {
-            renderSpeedSettings();
-        } else if (tabName === 'manage') {
+        if (tabName === 'manage') {
             loadRoutineList();
         } else if (tabName === 'changelog') {
             loadChangelog();
@@ -2113,9 +2059,8 @@
         return pausedElapsedMs;
     }
 
-    function getAdjustedSpeed(originalSpeed, routineIndex) {
-        if (!speedSettings[routineIndex]) return originalSpeed;
-        return originalSpeed * speedSettings[routineIndex];
+    function getAdjustedSpeed(originalSpeed) {
+        return originalSpeed;
     }
 
     // ===== 사운드 / 음성 =====
@@ -2211,21 +2156,6 @@
         }
     });
 
-    // ===== 속도 설정 저장/로드 =====
-    function loadSpeedSettings() {
-        try {
-            const raw = localStorage.getItem(STORAGE_PREFIX + currentRoutineId);
-            if (raw) {
-                speedSettings = JSON.parse(raw);
-            }
-        } catch (e) { /* corrupt */ }
-    }
-
-    function saveSpeedSettingsToStorage() {
-        try {
-            localStorage.setItem(STORAGE_PREFIX + currentRoutineId, JSON.stringify(speedSettings));
-        } catch (e) { /* quota 등 */ }
-    }
 
     // ===== 설정값 프리셋 관리 =====
     function loadPresetList() {
@@ -2261,7 +2191,6 @@
             const newPreset = {
                 id: presetId,
                 name: presetName,
-                settings: { ...speedSettings },
                 createdAt: new Date().toISOString()
             };
 
@@ -2294,10 +2223,6 @@
             const preset = presets.find(p => p.id === presetId);
 
             if (preset) {
-                speedSettings = { ...preset.settings };
-                saveSpeedSettingsToStorage();
-                renderSpeedSettings();
-                updateCurrentSettingsDisplay();
                 document.getElementById('statusLine').innerText = `"${preset.name}" 설정을 불러왔습니다.`;
                 vibrate(50);
             }
@@ -2318,96 +2243,6 @@
         } catch (e) { /* error */ }
     }
 
-    function renderSpeedSettings() {
-        renderGranularSettings();
-    }
-
-    function renderGranularSettings() {
-        const container = document.getElementById('granularSettings');
-        container.style.display = 'block';
-        container.innerHTML = '<div style="margin-bottom: 12px; font-size: 0.85em; color: #666;">루틴 카테고리 내 각 단계별로 속도를 조정합니다.</div>';
-
-        Object.entries(currentRoutineData.categories).forEach(([catName, indices]) => {
-            const catDiv = document.createElement('div');
-            catDiv.className = 'routine-category';
-
-            let html = `<h3>${catName}</h3>`;
-            html += `<div class="category-preset-buttons">
-                <button class="preset-btn" onclick="applyPresetToCategory('${catName}', 1.0)">초기화</button>
-            </div>`;
-            html += '<div class="phase-settings">';
-
-            indices.forEach(idx => {
-                const r = routine[idx];
-                const mult = speedSettings[idx] || 1.0;
-                const displaySpeed = (r.startSpeed * mult).toFixed(1);
-                html += `
-                    <div class="phase-setting-row">
-                        <label>${r.phase}</label>
-                        <input type="range" class="phase-slider" data-index="${idx}" data-base-speed="${r.startSpeed}" min="0.5" max="2.0" step="0.1" value="${mult}">
-                        <div class="speed-value-display">${displaySpeed} km/h</div>
-                    </div>
-                `;
-            });
-
-            html += '</div>';
-            catDiv.innerHTML = html;
-            container.appendChild(catDiv);
-        });
-
-        // 슬라이더 이벤트 바인딩
-        document.querySelectorAll('.phase-slider').forEach(slider => {
-            slider.addEventListener('input', (e) => {
-                const idx = parseInt(e.target.dataset.index);
-                const value = parseFloat(e.target.value);
-                const baseSpeed = parseFloat(e.target.dataset.baseSpeed);
-                const displaySpeed = (baseSpeed * value).toFixed(1);
-                speedSettings[idx] = value;
-                e.target.parentElement.querySelector('.speed-value-display').innerText = displaySpeed + ' km/h';
-                saveSpeedSettingsToStorage();
-                updateCurrentSettingsDisplay();
-            });
-        });
-    }
-
-    function applyPresetToCategory(catName, multiplier) {
-        const indices = currentRoutineData.categories[catName];
-        if (indices) {
-            indices.forEach(idx => {
-                speedSettings[idx] = multiplier;
-            });
-            renderGranularSettings();
-        }
-    }
-
-    function resetSpeedSettings() {
-        if (confirm('속도 설정을 초기화하시겠습니까?')) {
-            speedSettings = {};
-            saveSpeedSettingsToStorage();
-            renderSpeedSettings();
-            updateCurrentSettingsDisplay();
-            vibrate(50);
-        }
-    }
-
-    function updateCurrentSettingsDisplay() {
-        const display = document.getElementById('currentSettingsDisplay');
-        const changedItems = routine.map((r, idx) => {
-            const mult = speedSettings[idx];
-            if (!mult || mult === 1.0) return null;
-            const adjustedSpeed = (r.startSpeed * mult).toFixed(1);
-            const pct = mult >= 1
-                ? `+${((mult - 1) * 100).toFixed(0)}%`
-                : `-${((1 - mult) * 100).toFixed(0)}%`;
-            return `<div class="settings-item"><span class="settings-item-name">${r.phase}</span><span style="font-size:0.85em; color: var(--color-speed);">${adjustedSpeed} km/h (${pct})</span></div>`;
-        }).filter(Boolean);
-
-        if (changedItems.length === 0) {
-            display.innerHTML = '<span style="color: #666;">기본 속도 (설정 없음)</span>';
-        } else {
-            display.innerHTML = changedItems.join('');
-        }
-    }
 
     // ===== 현재 단계 계산 =====
     function getStageAt(elapsedSec) {
@@ -3926,11 +3761,9 @@
     loadTimerStyle();
     loadSoundPrefs();
     loadSavedMusic();
-    loadSpeedSettings();
     loadPresetList();
     loadRoutineList();
     renderRoutineList();
-    updateCurrentSettingsDisplay();
     switchTab('timer');
     // 브라우저가 스크롤을 복원하더라도 다음 프레임에서 강제로 최상단으로 되돌린다
     requestAnimationFrame(() => {

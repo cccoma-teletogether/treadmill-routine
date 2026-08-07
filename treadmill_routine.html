@@ -597,32 +597,32 @@
         .fitness-c-next-vals {
             display: flex;
             align-items: baseline;
-            gap: 8px;
+            gap: 4px;
             flex: 1;
             min-width: 0;
         }
 
-        .fitness-c-next-item {
-            display: flex;
-            align-items: baseline;
-            gap: 3px;
-        }
-
-        .fitness-c-next-lbl {
-            font-size: 0.65em;
-            color: #8a9bb0;
-        }
-
         .fitness-c-next-val {
-            font-size: 1.2em;
-            font-weight: 700;
-            color: #6b7c93;
+            font-size: 2.2em;
+            font-weight: 900;
+            color: #1a3a6a;
             font-variant-numeric: tabular-nums;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .fitness-c-next-unit {
+            font-size: 1.4em;
+            font-weight: 900;
+            color: #1a3a6a;
+            letter-spacing: -0.02em;
         }
 
         .fitness-c-next-sep {
             color: #b2bec3;
-            font-size: 0.9em;
+            font-size: 1.8em;
+            font-weight: 700;
+            padding: 0 2px;
         }
 
         .fitness-pie-bg { fill: #4a90d9; }
@@ -665,8 +665,8 @@
             .fitness-c-speed-num { color: #7ab8f5; }
             .fitness-c-speed-unit { color: #7ab8f5; }
             .fitness-c-next { background: #1e2c3e; border-color: #2e4060; }
-            .fitness-c-next-val { color: #7a93b0; }
-            .fitness-c-next-lbl { color: #5a7090; }
+            .fitness-c-next-val { color: #7ab8f5; }
+            .fitness-c-next-unit { color: #7ab8f5; }
             .fitness-c-next-sep { color: #3a5070; }
             .next-badge { background: #2e4060; }
         }
@@ -1664,15 +1664,9 @@
                     <div class="fitness-c-next">
                         <span class="next-badge">NEXT</span>
                         <div class="fitness-c-next-vals">
-                            <span class="fitness-c-next-item">
-                                <span class="fitness-c-next-lbl">경사</span>
-                                <span class="fitness-c-next-val" id="fitnessNextIncline">--</span>
-                            </span>
+                            <span class="fitness-c-next-val" id="fitnessNextIncline">--</span>
                             <span class="fitness-c-next-sep">·</span>
-                            <span class="fitness-c-next-item">
-                                <span class="fitness-c-next-val" id="fitnessNextSpeed">--</span>
-                                <span class="fitness-c-next-lbl">km/h</span>
-                            </span>
+                            <span class="fitness-c-next-val" id="fitnessNextSpeed">--</span><span class="fitness-c-next-unit">km/h</span>
                         </div>
                     </div>
                 </div>

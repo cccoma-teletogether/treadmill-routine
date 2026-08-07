@@ -556,27 +556,30 @@
         .fitness-c-speed-block {
             flex: 1;
             display: flex;
-            align-items: baseline;
-            padding: 8px 12px;
-            gap: 3px;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 8px;
+            gap: 0;
             background: #eaf2fc;
+            overflow: hidden;
         }
 
         .fitness-c-speed-num {
-            font-size: 2.6em;
-            font-weight: 800;
-            color: #4a90d9;
+            font-size: 4.8em;
+            font-weight: 900;
+            color: #1a3a6a;
             font-variant-numeric: tabular-nums;
-            letter-spacing: -0.04em;
+            letter-spacing: -0.05em;
             line-height: 1;
         }
 
         .fitness-c-speed-unit {
-            font-size: 0.7em;
-            color: #636e72;
-            font-weight: 600;
+            font-size: 1.6em;
+            color: #1a3a6a;
+            font-weight: 900;
             align-self: flex-end;
-            padding-bottom: 4px;
+            padding-bottom: 5px;
+            letter-spacing: -0.03em;
         }
 
         .fitness-c-next {
@@ -660,6 +663,7 @@
             .now-badge { background: #1a3050; color: #7ab8f5; }
             .fitness-c-speed-block { background: #1a2f4a; }
             .fitness-c-speed-num { color: #7ab8f5; }
+            .fitness-c-speed-unit { color: #7ab8f5; }
             .fitness-c-next { background: #1e2c3e; border-color: #2e4060; }
             .fitness-c-next-val { color: #7a93b0; }
             .fitness-c-next-lbl { color: #5a7090; }
@@ -1561,7 +1565,12 @@
             }
 
             .fitness-c-speed-num {
-                font-size: 2.2em;
+                font-size: 3.8em;
+            }
+
+            .fitness-c-speed-unit {
+                font-size: 1.3em;
+                padding-bottom: 4px;
             }
 
             .fitness-total {

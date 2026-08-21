@@ -601,6 +601,8 @@
             display: flex;
             align-items: baseline;
             gap: 3px;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .fitness-c-next-val {
@@ -1666,8 +1668,8 @@
                         <span class="next-badge">NEXT</span>
                         <div class="fitness-c-next-vals">
                             <span class="fitness-c-next-val" id="fitnessNextIncline">--</span>
-                            <span class="fitness-c-next-sep">·</span>
-                            <span class="fitness-c-next-val" id="fitnessNextSpeed">--</span><span class="fitness-c-next-unit">km/h</span>
+                            <span class="fitness-c-next-sep" id="fitnessNextSep">·</span>
+                            <span class="fitness-c-next-val" id="fitnessNextSpeed">--</span><span class="fitness-c-next-unit" id="fitnessNextUnit">km/h</span>
                         </div>
                     </div>
                 </div>
@@ -2387,6 +2389,8 @@
             document.getElementById('fitnessSpeedUnit').textContent = '';
             document.getElementById('fitnessNextIncline').textContent = '--';
             document.getElementById('fitnessNextSpeed').textContent = '--';
+            document.getElementById('fitnessNextSep').style.display = 'none';
+            document.getElementById('fitnessNextUnit').style.display = 'none';
             updateTimeDisplay('phase', 0, 1);
             updateTimeDisplay('total', 0, totalDuration);
             document.getElementById('nextPhase').innerHTML = "오늘의 유산소 루틴을 성공적으로 마쳤습니다!";
@@ -2458,9 +2462,13 @@
             const nx = routine[index + 1];
             document.getElementById('fitnessNextIncline').textContent = `${nx.incline || 0}°`;
             document.getElementById('fitnessNextSpeed').textContent = getAdjustedSpeed(nx.startSpeed, index + 1).toFixed(1);
+            document.getElementById('fitnessNextSep').style.display = '';
+            document.getElementById('fitnessNextUnit').style.display = '';
         } else {
-            document.getElementById('fitnessNextIncline').textContent = '--';
+            document.getElementById('fitnessNextIncline').textContent = '';
             document.getElementById('fitnessNextSpeed').textContent = '마지막';
+            document.getElementById('fitnessNextSep').style.display = 'none';
+            document.getElementById('fitnessNextUnit').style.display = 'none';
         }
         updateTimeDisplay('phase', phaseSecLeft, stage.duration);
         updateTimeDisplay('total', totalSecLeft, totalDuration);

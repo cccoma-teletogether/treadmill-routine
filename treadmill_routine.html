@@ -3534,6 +3534,8 @@
             opt.innerText = `${r.name} (커스텀)`;
             routineSelect.appendChild(opt);
         });
+        // 재빌드 후 현재 선택 루틴 복원
+        routineSelect.value = currentRoutineId;
 
         // 관리 탭 드롭다운 업데이트 (기본 + override는 id 단위 dedupe)
         const manageSelect = document.getElementById('manageRoutineSelect');

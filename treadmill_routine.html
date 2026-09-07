@@ -1216,6 +1216,17 @@
             .changelog-toggle-btn { background: #1e2c3e; border-color: #2e4060; }
             .changelog-toggle-btn:hover { background: #253548; }
         }
+        .pace-ref-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .pace-ref-table th { padding: 7px 10px; text-align: left; font-size: 0.82em; color: #888; border-bottom: 1.5px solid #d0dae6; }
+        .pace-ref-table td { padding: 7px 10px; border-bottom: 0.5px solid #e8edf2; font-variant-numeric: tabular-nums; }
+        .pace-ref-table td:first-child { font-weight: 600; }
+        .pace-ref-table td:nth-child(2) { color: #1a5fa8; font-weight: 700; }
+        .pace-ref-table tr:last-child td { border-bottom: none; }
+        @media (prefers-color-scheme: dark) {
+            .pace-ref-table th { color: #778; border-bottom-color: #2e4060; }
+            .pace-ref-table td { border-bottom-color: #1e2c3e; }
+            .pace-ref-table td:nth-child(2) { color: #5a9fd4; }
+        }
 
         .changelog-refresh-btn {
             padding: 5px 12px;
@@ -1943,6 +1954,28 @@
                 <button class="btn-reset-settings" onclick="document.getElementById('importFileInput').click()">가져오기</button>
             </div>
             <input type="file" id="importFileInput" accept="application/json,.json" style="display: none;" onchange="importAppData(this.files[0])">
+        </div>
+
+        <div class="setting-group">
+            <button class="changelog-toggle-btn" id="paceTableToggleBtn" onclick="togglePaceTableSection()">📏 속도·페이스 참고표 <span id="paceTableToggleIcon">▼</span></button>
+            <div id="paceTableSection" style="display:none; margin-top:10px; overflow-x:auto;">
+                <p class="changelog-desc">러닝머신 속도(km/h)별 야외 페이스(분/km) 환산표입니다.</p>
+                <table class="pace-ref-table">
+                    <thead><tr><th>속도</th><th>페이스</th><th>참고</th></tr></thead>
+                    <tbody>
+                        <tr><td>4 km/h</td><td>15:00 /km</td><td>워밍업 / 빠른 걷기</td></tr>
+                        <tr><td>5 km/h</td><td>12:00 /km</td><td>걷기 최고속 / 조깅 시작</td></tr>
+                        <tr><td>6 km/h</td><td>10:00 /km</td><td>가벼운 조깅</td></tr>
+                        <tr><td>7 km/h</td><td>8:34 /km</td><td>편안한 조깅</td></tr>
+                        <tr><td>8 km/h</td><td>7:30 /km</td><td>중간 페이스</td></tr>
+                        <tr><td>9 km/h</td><td>6:40 /km</td><td>활발한 달리기</td></tr>
+                        <tr><td>10 km/h</td><td>6:00 /km</td><td>빠른 달리기</td></tr>
+                        <tr><td>11 km/h</td><td>5:27 /km</td><td>경기 페이스</td></tr>
+                        <tr><td>12 km/h</td><td>5:00 /km</td><td>고강도 인터벌</td></tr>
+                    </tbody>
+                </table>
+                <p class="changelog-desc" style="margin-top:6px;">* 러닝머신 경사 1% 설정 시 야외 평지와 체감이 비슷합니다.</p>
+            </div>
         </div>
 
         <div class="setting-group">
@@ -4064,6 +4097,14 @@
                 '배포된 사이트 또는 로컬 서버에서 확인하세요.</div>';
             if (statusEl) { statusEl.textContent = '동기화 실패'; statusEl.className = 'changelog-sync-status error'; }
         }
+    }
+
+    function togglePaceTableSection() {
+        const sec = document.getElementById('paceTableSection');
+        const icon = document.getElementById('paceTableToggleIcon');
+        const open = sec.style.display === 'none';
+        sec.style.display = open ? '' : 'none';
+        icon.textContent = open ? '▲' : '▼';
     }
 
     function toggleChangelogSection() {

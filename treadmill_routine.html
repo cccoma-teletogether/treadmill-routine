@@ -553,6 +553,14 @@
             color: #555;
             margin-top: 4px;
         }
+        .metro-phase-pace {
+            font-size: 1.0em;
+            font-weight: 600;
+            color: #888;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 1px;
+            margin-top: 1px;
+        }
         .metro-cycle-count { font-size: 0.9em; color: #888; margin-top: 2px; }
         @media (prefers-color-scheme: dark) {
             .metro-interval-header { background: #1e2c3e; }
@@ -561,6 +569,7 @@
             .metro-phase-slow { background: #182a3a; border-color: #30507a; }
             .metro-interval-phase input[type="number"] { background: #1a2434; color: #ddd; border-color: #3a5070; }
             .metro-phase-speed { color: #aaa; }
+            .metro-phase-pace { color: #777; }
         }
 
         /* === 피트니스 파이 다이얼 === */
@@ -1961,6 +1970,7 @@
             <div class="metro-phase-label" id="metroPhaseLabel">🏃 빠르게 뛰기</div>
             <div class="metro-phase-time" id="metroPhaseTime">01:00</div>
             <div class="metro-phase-speed" id="metroPhaseSpeed">9.0 km/h</div>
+            <div class="metro-phase-pace" id="metroPhasePace">6:40 /km</div>
             <div class="metro-cycle-count" id="metroCycleCount">1세트</div>
         </div>
 
@@ -2662,6 +2672,14 @@
     let intervalPhaseRemainSec = 0;
     let intervalCycle = 1;
 
+    function speedToPace(speed) {
+        if (!speed || speed <= 0) return '--:--';
+        const total = 60 / speed;
+        const m = Math.floor(total);
+        const s = Math.round((total - m) * 60);
+        return m + ':' + String(s).padStart(2, '0');
+    }
+
     function loadIntervalSettings() {
         try {
             const s = JSON.parse(localStorage.getItem('metroIntervalSettings') || 'null');
@@ -2722,6 +2740,7 @@
             String(Math.floor(r / 60)).padStart(2,'0') + ':' + String(r % 60).padStart(2,'0');
         const speed = isFast ? intervalSettings.fastSpeed : intervalSettings.slowSpeed;
         document.getElementById('metroPhaseSpeed').textContent = speed.toFixed(1) + ' km/h';
+        document.getElementById('metroPhasePace').textContent = '페이스 ' + speedToPace(speed) + ' /km';
         document.getElementById('metroCycleCount').textContent = intervalCycle + '세트';
     }
     let metronomeTimerInterval = null;

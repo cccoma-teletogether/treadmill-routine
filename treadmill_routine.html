@@ -2887,15 +2887,22 @@
         }
     }
 
+    function setIntervalSettingsVisible(v) {
+        const el = document.getElementById('metroIntervalSettings');
+        if (el) el.style.display = (intervalEnabled && v) ? '' : 'none';
+    }
+
     function toggleMetronome() {
         if (metronomeRunning) {
             metronomeRunning = false;
             clearInterval(metronomeScheduleInterval);
             clearInterval(metronomeTimerInterval);
             document.getElementById('btnMetro').textContent = '▶ 시작';
+            setIntervalSettingsVisible(true);
         } else {
             ensureAudioCtx();
             metronomeRunning = true;
+            setIntervalSettingsVisible(false);
             metronomeStartTime = Date.now() - metronomeElapsedSec * 1000;
             metronomeNextBeatTime = audioCtx.currentTime + 0.05;
             if (intervalEnabled && metronomeElapsedSec === 0) {
@@ -2958,6 +2965,7 @@
         document.getElementById('metroElapsed').textContent = '00:00';
         document.getElementById('btnMetro').textContent = '▶ 시작';
         document.getElementById('metroIntervalDisplay').style.display = 'none';
+        setIntervalSettingsVisible(true);
     }
 
     // ===== 배경음악 제어 =====

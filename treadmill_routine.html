@@ -461,7 +461,21 @@
             padding: 10px 14px;
             background: #f0f4f8;
             border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
+        .metro-settings-btn {
+            padding: 4px 10px;
+            font-size: 0.82em;
+            border: 1px solid #b0c4d8;
+            border-radius: 6px;
+            background: white;
+            color: #4a6080;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .metro-settings-btn:hover { background: #e4ecf4; }
         .metro-interval-toggle-label {
             display: flex;
             align-items: center;
@@ -566,6 +580,8 @@
         .metro-cycle-count { font-size: 0.9em; color: #888; margin-top: 2px; }
         @media (prefers-color-scheme: dark) {
             .metro-interval-header { background: #1e2c3e; }
+            .metro-settings-btn { background: #1a2434; border-color: #2e4060; color: #8ab4d4; }
+            .metro-settings-btn:hover { background: #253548; }
             .metro-interval-settings { background: #1a2434; border-color: #2e4060; }
             .metro-phase-fast { background: #3a1818; border-color: #7a3030; }
             .metro-phase-slow { background: #182a3a; border-color: #30507a; }
@@ -2031,6 +2047,7 @@
                     <input type="checkbox" id="metroIntervalEnabled" onchange="onIntervalToggle()">
                     인터벌 모드 (2뛰·1뛰)
                 </label>
+                <button class="metro-settings-btn" id="metroSettingsBtn" style="display:none" onclick="toggleIntervalSettings()">⚙ 설정</button>
             </div>
             <div class="metro-interval-settings" id="metroIntervalSettings" style="display:none">
                 <!-- 워밍업 -->
@@ -2761,12 +2778,18 @@
 
     function onIntervalToggle() {
         intervalEnabled = document.getElementById('metroIntervalEnabled').checked;
-        document.getElementById('metroIntervalSettings').style.display = intervalEnabled ? '' : 'none';
+        document.getElementById('metroSettingsBtn').style.display = intervalEnabled ? '' : 'none';
+        document.getElementById('metroIntervalSettings').style.display = 'none';
         if (!intervalEnabled) {
             metronomeMuted = false;
             isInWarmup = false;
             document.getElementById('metroIntervalDisplay').style.display = 'none';
         }
+    }
+
+    function toggleIntervalSettings() {
+        const el = document.getElementById('metroIntervalSettings');
+        el.style.display = el.style.display === 'none' ? '' : 'none';
     }
 
     function onWarmupToggle() {
@@ -2887,22 +2910,15 @@
         }
     }
 
-    function setIntervalSettingsVisible(v) {
-        const el = document.getElementById('metroIntervalSettings');
-        if (el) el.style.display = (intervalEnabled && v) ? '' : 'none';
-    }
-
     function toggleMetronome() {
         if (metronomeRunning) {
             metronomeRunning = false;
             clearInterval(metronomeScheduleInterval);
             clearInterval(metronomeTimerInterval);
             document.getElementById('btnMetro').textContent = '▶ 시작';
-            setIntervalSettingsVisible(true);
         } else {
             ensureAudioCtx();
             metronomeRunning = true;
-            setIntervalSettingsVisible(false);
             metronomeStartTime = Date.now() - metronomeElapsedSec * 1000;
             metronomeNextBeatTime = audioCtx.currentTime + 0.05;
             if (intervalEnabled && metronomeElapsedSec === 0) {
@@ -2965,7 +2981,6 @@
         document.getElementById('metroElapsed').textContent = '00:00';
         document.getElementById('btnMetro').textContent = '▶ 시작';
         document.getElementById('metroIntervalDisplay').style.display = 'none';
-        setIntervalSettingsVisible(true);
     }
 
     // ===== 배경음악 제어 =====

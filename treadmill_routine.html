@@ -2042,17 +2042,17 @@
                     <label id="itvWarmupSpeedLabel" style="display:none">속도<input type="number" id="itvWarmupSpeed" min="1" max="25" step="0.5" value="5.0">km/h</label>
                 </div>
                 <div class="metro-interval-row">
-                    <div class="metro-interval-phase metro-phase-fast">
-                        <div class="metro-phase-icon">🏃</div>
-                        <div class="metro-phase-name">빠르게 뛰기<span class="metro-phase-mute-hint">메트로놈 꺼짐</span></div>
-                        <label>시간<input type="number" id="itvFastMin" min="0.5" max="30" step="0.5" value="1">분</label>
-                        <label>속도<input type="number" id="itvFastSpeed" min="1" max="25" step="0.5" value="9.0">km/h</label>
-                    </div>
                     <div class="metro-interval-phase metro-phase-slow">
                         <div class="metro-phase-icon">🚶</div>
                         <div class="metro-phase-name">천천히 뛰기<span class="metro-phase-mute-hint">메트로놈 켜짐</span></div>
                         <label>시간<input type="number" id="itvSlowMin" min="0.5" max="30" step="0.5" value="2">분</label>
                         <label>속도<input type="number" id="itvSlowSpeed" min="1" max="25" step="0.5" value="6.0">km/h</label>
+                    </div>
+                    <div class="metro-interval-phase metro-phase-fast">
+                        <div class="metro-phase-icon">🏃</div>
+                        <div class="metro-phase-name">빠르게 뛰기<span class="metro-phase-mute-hint">메트로놈 꺼짐</span></div>
+                        <label>시간<input type="number" id="itvFastMin" min="0.5" max="30" step="0.5" value="1">분</label>
+                        <label>속도<input type="number" id="itvFastSpeed" min="1" max="25" step="0.5" value="9.0">km/h</label>
                     </div>
                 </div>
                 <button class="btn-metro-save" onclick="saveIntervalSettings()">💾 저장</button>

@@ -2790,6 +2790,11 @@
             isInWarmup = false;
             document.getElementById('metroIntervalDisplay').style.display = 'none';
         }
+        try {
+            const s = JSON.parse(localStorage.getItem('metroIntervalSettings') || '{}');
+            s.intervalEnabled = intervalEnabled;
+            localStorage.setItem('metroIntervalSettings', JSON.stringify(s));
+        } catch(e) {}
     }
 
     function toggleIntervalSettings() {

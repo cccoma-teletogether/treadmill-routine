@@ -499,16 +499,16 @@
         .metro-interval-phase {
             flex: 1;
             border-radius: 8px;
-            padding: 12px 10px;
+            padding: 7px 8px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
         }
         .metro-phase-fast { background: #fff3f3; border: 1.5px solid #ffb3b3; }
         .metro-phase-slow { background: #f0f8ff; border: 1.5px solid #b3d4ff; }
         .metro-phase-warmup { background: #f0fff4; border: 1.5px solid #a8e6c0; }
-        .metro-phase-icon { font-size: 1.6em; text-align: center; }
-        .metro-phase-name { font-weight: 700; font-size: 0.82em; text-align: center; }
+        .metro-phase-icon { font-size: 1.2em; text-align: center; }
+        .metro-phase-name { font-weight: 700; font-size: 0.78em; text-align: center; }
         .metro-phase-mute-hint {
             display: block;
             font-size: 0.75em;
@@ -2761,6 +2761,7 @@
                 if (s.warmupMin !== undefined) warmupSettings.min = s.warmupMin;
                 if (s.warmupSpeed !== undefined) warmupSettings.speed = s.warmupSpeed;
                 if (s.warmupEnabled !== undefined) warmupEnabled = s.warmupEnabled;
+                if (s.intervalEnabled !== undefined) intervalEnabled = s.intervalEnabled;
             }
         } catch(e) {}
         document.getElementById('itvFastMin').value = intervalSettings.fastMin;
@@ -2773,6 +2774,10 @@
         if (warmupEnabled) {
             document.getElementById('itvWarmupTimeLabel').style.display = '';
             document.getElementById('itvWarmupSpeedLabel').style.display = '';
+        }
+        if (intervalEnabled) {
+            document.getElementById('metroIntervalEnabled').checked = true;
+            document.getElementById('metroSettingsBtn').style.display = '';
         }
     }
 
@@ -2810,7 +2815,7 @@
             min:   parseFloat(document.getElementById('itvWarmupMin').value)   || 3,
             speed: parseFloat(document.getElementById('itvWarmupSpeed').value) || 5.0,
         };
-        const saved = { ...intervalSettings, warmupEnabled, warmupMin: warmupSettings.min, warmupSpeed: warmupSettings.speed };
+        const saved = { ...intervalSettings, intervalEnabled, warmupEnabled, warmupMin: warmupSettings.min, warmupSpeed: warmupSettings.speed };
         try { localStorage.setItem('metroIntervalSettings', JSON.stringify(saved)); } catch(e) {}
         const btn = document.querySelector('.btn-metro-save');
         btn.textContent = '✓ 저장됨';

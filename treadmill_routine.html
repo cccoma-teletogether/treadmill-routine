@@ -2080,7 +2080,7 @@
                         <label style="display:flex;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvWarmupEnabled" onchange="onWarmupToggle()"> 사용</label>
                         <label id="itvWarmupTimeLabel" style="display:none">시간<input type="number" id="itvWarmupMin" min="0.5" max="30" step="0.5" value="3">분</label>
                         <label id="itvWarmupSpeedLabel" style="display:none">속도<input type="number" id="itvWarmupSpeed" min="1" max="25" step="0.5" value="5.0">km/h</label>
-                        <label id="itvWarmupMuteLabel" style="display:none;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvWarmupMute" checked onchange="warmupMuted = this.checked"> 무음</label>
+                        <label id="itvWarmupMuteLabel" style="display:none;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvWarmupMute" checked onchange="warmupMuted = this.checked; if (isInWarmup) metronomeMuted = warmupMuted;"> 무음</label>
                     </div>
                 </div>
                 <div class="metro-interval-row">
@@ -2835,10 +2835,12 @@
             document.getElementById('itvCooldownSpeedLabel').style.display = '';
         }
         document.getElementById('itvTotalCycles').value = totalCycles;
-        if (intervalEnabled) {
-            document.getElementById('metroIntervalEnabled').checked = true;
-            document.getElementById('metroSettingsBtn').style.display = '';
-        }
+        requestAnimationFrame(() => {
+            const dedicated = localStorage.getItem('itv_enabled');
+            if (dedicated !== null) intervalEnabled = dedicated === '1';
+            document.getElementById('metroIntervalEnabled').checked = intervalEnabled;
+            document.getElementById('metroSettingsBtn').style.display = intervalEnabled ? '' : 'none';
+        });
     }
 
     function onIntervalToggle() {
@@ -2853,6 +2855,7 @@
             document.getElementById('btnMetroNext').style.display = 'none';
         }
         try {
+            localStorage.setItem('itv_enabled', intervalEnabled ? '1' : '0');
             const s = JSON.parse(localStorage.getItem('metroIntervalSettings') || '{}');
             s.intervalEnabled = intervalEnabled;
             localStorage.setItem('metroIntervalSettings', JSON.stringify(s));

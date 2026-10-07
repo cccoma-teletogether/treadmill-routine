@@ -1895,6 +1895,14 @@
             다음 루틴: <b>시작을 눌러주세요</b>
         </div>
 
+        <!-- 혈당 위젯 (타이머 탭) -->
+        <div class="bg-widget" id="bgWidgetTimer" style="display:none">
+            <span>💉</span>
+            <span id="bgValueTimer">-- mg/dL</span>
+            <span id="bgTrendTimer" style="font-size:1.1em"></span>
+            <span class="bg-time" id="bgTimeTimer"></span>
+        </div>
+
         <div class="controls">
             <button class="btn-start" id="btnStartPause" onclick="toggleTimer()">시작</button>
             <button class="btn-skip" onclick="skipPhase()" title="다음 단계로 건너뛰기">다음 ▶</button>
@@ -2919,8 +2927,12 @@
         const val = parseInt(document.getElementById('bgValue')?.textContent);
         if (!isNaN(val)) {
             const c = getBGColor(val);
-            document.getElementById('bgValue').style.color = c;
-            document.getElementById('bgTrend').style.color = c;
+            for (const sfx of ['', 'Timer']) {
+                const v = document.getElementById('bgValue' + sfx);
+                const t = document.getElementById('bgTrend' + sfx);
+                if (v) v.style.color = c;
+                if (t) t.style.color = c;
+            }
         }
     }
 
@@ -2975,19 +2987,28 @@
             const arrow = BG_TREND[entry.direction] || '';
             const ageStr = bgAgeStr();
             const color = getBGColor(sgv);
-            document.getElementById('bgValue').textContent = sgv + ' mg/dL';
-            document.getElementById('bgValue').style.color = color;
-            document.getElementById('bgTrend').textContent = arrow;
-            document.getElementById('bgTrend').style.color = color;
-            document.getElementById('bgTime').textContent = ageStr;
-            widget.className = 'bg-widget';
-            widget.style.display = '';
+            const txt = sgv + ' mg/dL';
+            for (const sfx of ['', 'Timer']) {
+                const w = document.getElementById('bgWidget' + sfx);
+                if (!w) continue;
+                document.getElementById('bgValue' + sfx).textContent = txt;
+                document.getElementById('bgValue' + sfx).style.color = color;
+                document.getElementById('bgTrend' + sfx).textContent = arrow;
+                document.getElementById('bgTrend' + sfx).style.color = color;
+                document.getElementById('bgTime' + sfx).textContent = ageStr;
+                w.className = 'bg-widget';
+                w.style.display = '';
+            }
         } catch(e) {
-            document.getElementById('bgValue').textContent = '-- mg/dL';
-            document.getElementById('bgTrend').textContent = '';
-            document.getElementById('bgTime').textContent = '조회 실패';
-            widget.className = 'bg-widget';
-            widget.style.display = '';
+            for (const sfx of ['', 'Timer']) {
+                const w = document.getElementById('bgWidget' + sfx);
+                if (!w) continue;
+                document.getElementById('bgValue' + sfx).textContent = '-- mg/dL';
+                document.getElementById('bgTrend' + sfx).textContent = '';
+                document.getElementById('bgTime' + sfx).textContent = '조회 실패';
+                w.className = 'bg-widget';
+                w.style.display = '';
+            }
         }
     }
 
@@ -3025,9 +3046,11 @@
         fetchBG();
         bgPollTimer = setInterval(fetchBG, 60000);
         setInterval(() => {
-            if (bgLastDate) {
-                const el = document.getElementById('bgTime');
-                if (el) el.textContent = bgAgeStr();
+            if (!bgLastDate) return;
+            const s = bgAgeStr();
+            for (const sfx of ['', 'Timer']) {
+                const el = document.getElementById('bgTime' + sfx);
+                if (el) el.textContent = s;
             }
         }, 30000);
     }

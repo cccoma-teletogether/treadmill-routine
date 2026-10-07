@@ -599,7 +599,18 @@
             margin-top: 1px;
         }
         .metro-cycle-count { font-size: 0.9em; color: #888; margin-top: 2px; }
+        .bg-widget { display:flex; align-items:center; justify-content:center; gap:8px; padding:7px 16px; border-radius:10px; background:#f0f8ff; border:1.5px solid #b3d9ff; font-size:1.05em; font-weight:700; margin-top:8px; width:100%; max-width:380px; box-sizing:border-box; }
+        .bg-widget.bg-normal { background:#f0fff4; border-color:#86e89a; color:#1e8449; }
+        .bg-widget.bg-low    { background:#fff0f0; border-color:#ffaaaa; color:#c0392b; }
+        .bg-widget.bg-high   { background:#fff8e1; border-color:#ffd54f; color:#e67e22; }
+        .bg-widget.bg-danger { background:#fff0f0; border-color:#e74c3c; color:#c0392b; }
+        .bg-time { font-size:0.72em; font-weight:400; color:#888; margin-left:2px; }
         @media (prefers-color-scheme: dark) {
+            .bg-widget { background:#1a2a3a; border-color:#2e4a6a; color:#8ab4d4; }
+            .bg-widget.bg-normal { background:#0f2a18; border-color:#27ae60; color:#58d68d; }
+            .bg-widget.bg-low    { background:#2a0f0f; border-color:#c0392b; color:#ec7063; }
+            .bg-widget.bg-high   { background:#2a2010; border-color:#e67e22; color:#f0b27a; }
+            .bg-widget.bg-danger { background:#2a0f0f; border-color:#e74c3c; color:#ec7063; }
             .metro-interval-header { background: #1e2c3e; }
             .metro-settings-btn { background: #1a2434; border-color: #2e4060; color: #8ab4d4; }
             .metro-settings-btn:hover { background: #253548; }
@@ -1995,6 +2006,17 @@
             </div>
         </div>
 
+        <div class="setting-group" style="margin-top:12px;">
+            <label>💉 Nightscout 혈당 연동</label>
+            <div style="font-size:0.8em;color:#7f8c8d;margin-bottom:8px;">Nightscout 서버에서 혈당값을 가져와 메트로놈 화면에 표시합니다.</div>
+            <input type="url" id="nsUrl" placeholder="https://yoursite.up.railway.app" autocomplete="off" style="width:100%;padding:7px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;">
+            <input type="text" id="nsToken" placeholder="API 토큰 (선택사항)" autocomplete="off" style="width:100%;padding:7px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;">
+            <div class="setting-actions">
+                <button class="btn-save-settings" onclick="saveNightscoutSettings()">저장</button>
+                <button class="btn-reset-settings" onclick="testNightscoutConnection()">연결 확인</button>
+            </div>
+        </div>
+
         <div class="setting-group">
             <label>💾 데이터 백업/복원</label>
             <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 8px;">커스텀 루틴, 프리셋, 운동 기록을 JSON 파일로 저장하거나 복원합니다. (음악 파일은 포함되지 않습니다)</div>
@@ -2062,6 +2084,14 @@
             <button class="btn-metro-reset" onclick="resetMetronome()">↺ 초기화</button>
         </div>
         <div class="metro-announce-label">5분마다 경과 시간을 음성으로 알려드립니다</div>
+
+        <!-- 혈당 위젯 -->
+        <div class="bg-widget" id="bgWidget" style="display:none">
+            <span>💉</span>
+            <span id="bgValue">-- mg/dL</span>
+            <span id="bgTrend" style="font-size:1.1em"></span>
+            <span class="bg-time" id="bgTime"></span>
+        </div>
 
         <!-- 인터벌 설정 패널 -->
         <div class="metro-interval-panel">
@@ -2798,6 +2828,96 @@
         const m = Math.floor(total);
         const s = Math.round((total - m) * 60);
         return m + ':' + String(s).padStart(2, '0');
+    }
+
+    // ===== Nightscout 혈당 연동 =====
+    let nightscoutUrl = '';
+    let nightscoutToken = '';
+    let bgPollTimer = null;
+
+    const BG_TREND = {
+        DoubleUp: '⬆⬆', SingleUp: '⬆', FortyFiveUp: '↗',
+        Flat: '→',
+        FortyFiveDown: '↘', SingleDown: '⬇', DoubleDown: '⬇⬇',
+        'NOT COMPUTABLE': '-', NONE: '-'
+    };
+
+    function loadNightscoutSettings() {
+        try {
+            const s = JSON.parse(localStorage.getItem('nightscoutSettings') || 'null');
+            if (s) { nightscoutUrl = s.url || ''; nightscoutToken = s.token || ''; }
+        } catch(e) {}
+        document.getElementById('nsUrl').value = nightscoutUrl;
+        document.getElementById('nsToken').value = nightscoutToken;
+        if (nightscoutUrl) startBGPolling();
+    }
+
+    function saveNightscoutSettings() {
+        nightscoutUrl = document.getElementById('nsUrl').value.trim().replace(/\/$/, '');
+        nightscoutToken = document.getElementById('nsToken').value.trim();
+        try { localStorage.setItem('nightscoutSettings', JSON.stringify({ url: nightscoutUrl, token: nightscoutToken })); } catch(e) {}
+        startBGPolling();
+        const btn = event.target;
+        btn.textContent = '✓ 저장됨';
+        setTimeout(() => btn.textContent = '저장', 1500);
+    }
+
+    async function fetchBG() {
+        if (!nightscoutUrl) return;
+        const widget = document.getElementById('bgWidget');
+        try {
+            let url = nightscoutUrl + '/api/v1/entries/current.json';
+            if (nightscoutToken) url += '?token=' + encodeURIComponent(nightscoutToken);
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            const entry = Array.isArray(data) ? data[0] : data;
+            if (!entry || entry.sgv == null) throw new Error('데이터 없음');
+            const sgv = entry.sgv;
+            const arrow = BG_TREND[entry.direction] || '';
+            const ageMs = Date.now() - (entry.date || 0);
+            const ageMins = Math.floor(ageMs / 60000);
+            const ageStr = ageMins < 1 ? '방금' : ageMins < 60 ? ageMins + '분 전' : Math.floor(ageMins / 60) + '시간 전';
+            document.getElementById('bgValue').textContent = sgv + ' mg/dL';
+            document.getElementById('bgTrend').textContent = arrow;
+            document.getElementById('bgTime').textContent = ageStr;
+            const cls = sgv < 70 ? 'bg-low' : sgv > 250 ? 'bg-danger' : sgv > 180 ? 'bg-high' : 'bg-normal';
+            widget.className = 'bg-widget ' + cls;
+            widget.style.display = '';
+        } catch(e) {
+            document.getElementById('bgValue').textContent = '-- mg/dL';
+            document.getElementById('bgTrend').textContent = '';
+            document.getElementById('bgTime').textContent = '조회 실패';
+            widget.className = 'bg-widget';
+            widget.style.display = '';
+        }
+    }
+
+    async function testNightscoutConnection() {
+        if (!nightscoutUrl) { alert('서버 주소를 먼저 입력하고 저장하세요.'); return; }
+        const btn = event.target;
+        btn.textContent = '확인 중…';
+        try {
+            let url = nightscoutUrl + '/api/v1/entries/current.json';
+            if (nightscoutToken) url += '?token=' + encodeURIComponent(nightscoutToken);
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            const entry = Array.isArray(data) ? data[0] : data;
+            if (!entry || entry.sgv == null) throw new Error('데이터 없음');
+            alert('연결 성공 ✓\n현재 혈당: ' + entry.sgv + ' mg/dL');
+            fetchBG();
+        } catch(e) {
+            alert('연결 실패: ' + e.message);
+        }
+        btn.textContent = '연결 확인';
+    }
+
+    function startBGPolling() {
+        if (bgPollTimer) clearInterval(bgPollTimer);
+        if (!nightscoutUrl) { document.getElementById('bgWidget').style.display = 'none'; return; }
+        fetchBG();
+        bgPollTimer = setInterval(fetchBG, 60000);
     }
 
     function loadIntervalSettings() {
@@ -4543,6 +4663,7 @@
     loadRoutineList();
     renderRoutineList();
     loadIntervalSettings();
+    loadNightscoutSettings();
     restoreRunningState();
     switchTab('timer');
     // 브라우저가 스크롤을 복원하더라도 다음 프레임에서 강제로 최상단으로 되돌린다

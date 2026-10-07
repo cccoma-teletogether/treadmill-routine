@@ -2015,6 +2015,15 @@
                 <button class="btn-save-settings" onclick="saveNightscoutSettings()">저장</button>
                 <button class="btn-reset-settings" onclick="testNightscoutConnection()">연결 확인</button>
             </div>
+            <div style="margin-top:12px;">
+                <div style="font-size:0.82em;font-weight:600;color:#555;margin-bottom:6px;">혈당 범위 색상</div>
+                <div style="font-size:0.76em;color:#999;margin-bottom:7px;">낮은 값부터 순서대로 설정. 마지막 항목은 그 이상 전체에 적용됩니다.</div>
+                <div id="bgRangeList"></div>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                    <button class="btn-reset-settings" onclick="addBGRange()" style="font-size:0.85em;padding:6px 10px;">+ 범위 추가</button>
+                    <button class="btn-save-settings" id="btnSaveBGRanges" onclick="saveBGRanges()" style="font-size:0.85em;padding:6px 10px;">저장</button>
+                </div>
+            </div>
         </div>
 
         <div class="setting-group">
@@ -2834,6 +2843,12 @@
     let nightscoutUrl = '';
     let nightscoutToken = '';
     let bgPollTimer = null;
+    let bgRanges = [
+        { max: 70,   color: '#e74c3c' },
+        { max: 154,  color: '#27ae60' },
+        { max: 214,  color: '#f39c12' },
+        { max: 9999, color: '#c0392b' }
+    ];
 
     const BG_TREND = {
         DoubleUp: '⬆⬆', SingleUp: '⬆', FortyFiveUp: '↗',
@@ -2841,6 +2856,71 @@
         FortyFiveDown: '↘', SingleDown: '⬇', DoubleDown: '⬇⬇',
         'NOT COMPUTABLE': '-', NONE: '-'
     };
+
+    function getBGColor(sgv) {
+        const sorted = [...bgRanges].sort((a, b) => a.max - b.max);
+        for (const r of sorted) { if (sgv <= r.max) return r.color; }
+        return sorted[sorted.length - 1]?.color || '#333';
+    }
+
+    function renderBGRangeUI() {
+        const container = document.getElementById('bgRangeList');
+        if (!container) return;
+        container.innerHTML = '';
+        bgRanges.forEach((r, i) => {
+            const isLast = i === bgRanges.length - 1;
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:0.84em;';
+            row.innerHTML =
+                `<input type="color" value="${r.color}" oninput="bgRanges[${i}].color=this.value;updateBGWidgetColor()" style="width:30px;height:28px;border:none;padding:2px;cursor:pointer;border-radius:4px;background:none;">`
+                + (isLast
+                    ? `<span style="flex:1;color:#666">이상</span>`
+                    : `<input type="number" value="${r.max}" min="1" max="999" step="1" onchange="bgRanges[${i}].max=parseInt(this.value)||0" style="width:50px;padding:3px 5px;border:1px solid #ccc;border-radius:4px;text-align:right;font-size:1em;"> <span style="color:#666;white-space:nowrap;">mg/dL 이하</span>`)
+                + `<button onclick="removeBGRange(${i})" style="padding:2px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;color:#aaa;line-height:1.4;">✕</button>`;
+            container.appendChild(row);
+        });
+    }
+
+    function addBGRange() {
+        const insertAt = Math.max(0, bgRanges.length - 1);
+        const prevMax = bgRanges[insertAt - 1]?.max || 100;
+        bgRanges.splice(insertAt, 0, { max: Math.min(prevMax + 30, 998), color: '#f39c12' });
+        renderBGRangeUI();
+    }
+
+    function removeBGRange(i) {
+        if (bgRanges.length <= 1) return;
+        bgRanges.splice(i, 1);
+        renderBGRangeUI();
+    }
+
+    function saveBGRanges() {
+        const body = [...bgRanges.slice(0, -1)].sort((a, b) => a.max - b.max);
+        body.push(bgRanges[bgRanges.length - 1]);
+        bgRanges = body;
+        try { localStorage.setItem('bgRanges', JSON.stringify(bgRanges)); } catch(e) {}
+        renderBGRangeUI();
+        const btn = document.getElementById('btnSaveBGRanges');
+        btn.textContent = '✓ 저장됨';
+        setTimeout(() => btn.textContent = '저장', 1500);
+    }
+
+    function loadBGRanges() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('bgRanges') || 'null');
+            if (saved && Array.isArray(saved) && saved.length > 0) bgRanges = saved;
+        } catch(e) {}
+        renderBGRangeUI();
+    }
+
+    function updateBGWidgetColor() {
+        const val = parseInt(document.getElementById('bgValue')?.textContent);
+        if (!isNaN(val)) {
+            const c = getBGColor(val);
+            document.getElementById('bgValue').style.color = c;
+            document.getElementById('bgTrend').style.color = c;
+        }
+    }
 
     function loadNightscoutSettings() {
         try {
@@ -2878,11 +2958,13 @@
             const ageMs = Date.now() - (entry.date || 0);
             const ageMins = Math.floor(ageMs / 60000);
             const ageStr = ageMins < 1 ? '방금' : ageMins < 60 ? ageMins + '분 전' : Math.floor(ageMins / 60) + '시간 전';
+            const color = getBGColor(sgv);
             document.getElementById('bgValue').textContent = sgv + ' mg/dL';
+            document.getElementById('bgValue').style.color = color;
             document.getElementById('bgTrend').textContent = arrow;
+            document.getElementById('bgTrend').style.color = color;
             document.getElementById('bgTime').textContent = ageStr;
-            const cls = sgv < 70 ? 'bg-low' : sgv > 250 ? 'bg-danger' : sgv > 180 ? 'bg-high' : 'bg-normal';
-            widget.className = 'bg-widget ' + cls;
+            widget.className = 'bg-widget';
             widget.style.display = '';
         } catch(e) {
             document.getElementById('bgValue').textContent = '-- mg/dL';
@@ -4664,6 +4746,7 @@
     renderRoutineList();
     loadIntervalSettings();
     loadNightscoutSettings();
+    loadBGRanges();
     restoreRunningState();
     switchTab('timer');
     // 브라우저가 스크롤을 복원하더라도 다음 프레임에서 강제로 최상단으로 되돌린다

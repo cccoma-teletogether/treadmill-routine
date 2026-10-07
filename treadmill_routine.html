@@ -2930,7 +2930,10 @@
         } catch(e) {}
         document.getElementById('nsUrl').value = nightscoutUrl;
         document.getElementById('nsToken').value = nightscoutToken;
-        if (nightscoutUrl) startBGPolling();
+        if (nightscoutUrl) {
+            nsStatus('저장된 주소: ' + nightscoutUrl, false);
+            startBGPolling();
+        }
     }
 
     function nsStatus(msg, isError) {
@@ -2944,7 +2947,13 @@
     function saveNightscoutSettings(btn) {
         nightscoutUrl = document.getElementById('nsUrl').value.trim().replace(/\/$/, '');
         nightscoutToken = document.getElementById('nsToken').value.trim();
-        try { localStorage.setItem('nightscoutSettings', JSON.stringify({ url: nightscoutUrl, token: nightscoutToken })); } catch(e) {}
+        if (!nightscoutUrl) { nsStatus('주소를 입력해 주세요.', true); return; }
+        try {
+            localStorage.setItem('nightscoutSettings', JSON.stringify({ url: nightscoutUrl, token: nightscoutToken }));
+            nsStatus('✓ 저장됨 — ' + nightscoutUrl, false);
+        } catch(e) {
+            nsStatus('저장 실패: ' + e.message, true); return;
+        }
         startBGPolling();
         if (btn) { btn.textContent = '✓ 저장됨'; setTimeout(() => btn.textContent = '저장', 1500); }
     }

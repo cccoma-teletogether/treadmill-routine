@@ -427,34 +427,34 @@
         .metro-phase-label.phase-warmup { color: #27ae60; }
         .metro-announce-label { font-size: 0.85em; color: #999; margin-top: 12px; }
         .btn-metro-start {
-            padding: 14px 44px;
-            font-size: 1.2em;
+            padding: 14px 22px;
+            font-size: 1.1em;
             background: var(--color-accent);
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            margin: 4px;
+            white-space: nowrap;
         }
         .btn-metro-reset {
-            padding: 14px 24px;
-            font-size: 1.2em;
+            padding: 14px 16px;
+            font-size: 1.1em;
             background: #b2bec3;
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            margin: 4px;
+            white-space: nowrap;
         }
         .btn-metro-next {
-            padding: 14px 20px;
-            font-size: 1.2em;
+            padding: 14px 16px;
+            font-size: 1.1em;
             background: #74b9ff;
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            margin: 4px;
+            white-space: nowrap;
         }
         @media (prefers-color-scheme: dark) {
             .btn-metro-reset { background: #444; }
@@ -2053,10 +2053,9 @@
             <div class="metro-phase-time" id="metroPhaseTime">01:00</div>
             <div class="metro-phase-speed" id="metroPhaseSpeed">9.0 km/h</div>
             <div class="metro-phase-pace" id="metroPhasePace">6:40 /km</div>
-            <div class="metro-cycle-count" id="metroCycleCount">1세트</div>
         </div>
 
-        <div>
+        <div style="display:flex;flex-wrap:nowrap;justify-content:center;gap:4px;width:100%;max-width:380px;">
             <button class="btn-metro-start" id="btnMetro" onclick="toggleMetronome()">▶ 시작</button>
             <button class="btn-metro-next" id="btnMetroNext" onclick="skipToNextPhase()" style="display:none">⏭ 다음</button>
             <button class="btn-metro-reset" onclick="resetMetronome()">↺ 초기화</button>
@@ -2075,11 +2074,12 @@
             <div class="metro-interval-settings" id="metroIntervalSettings" style="display:none">
                 <!-- 워밍업 -->
                 <div class="metro-interval-phase metro-phase-warmup" style="margin-bottom:6px;">
-                    <div class="metro-phase-name">🚶 워밍업<span class="metro-phase-mute-hint">메트로놈 꺼짐</span></div>
+                    <div class="metro-phase-name">🚶 워밍업</div>
                     <div class="metro-phase-inputs">
                         <label style="display:flex;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvWarmupEnabled" onchange="onWarmupToggle()"> 사용</label>
                         <label id="itvWarmupTimeLabel" style="display:none">시간<input type="number" id="itvWarmupMin" min="0.5" max="30" step="0.5" value="3">분</label>
                         <label id="itvWarmupSpeedLabel" style="display:none">속도<input type="number" id="itvWarmupSpeed" min="1" max="25" step="0.5" value="5.0">km/h</label>
+                        <label id="itvWarmupMuteLabel" style="display:none;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvWarmupMute" checked> 무음</label>
                     </div>
                 </div>
                 <div class="metro-interval-row">
@@ -2780,6 +2780,7 @@
     let intervalCycle = 1;
     let warmupEnabled = false;
     let warmupSettings = { min: 3, speed: 5.0 };
+    let warmupMuted = true;
     let isInWarmup = false;
     let warmupRemainSec = 0;
     let cooldownEnabled = false;
@@ -2804,6 +2805,7 @@
                 if (s.warmupMin !== undefined) warmupSettings.min = s.warmupMin;
                 if (s.warmupSpeed !== undefined) warmupSettings.speed = s.warmupSpeed;
                 if (s.warmupEnabled !== undefined) warmupEnabled = s.warmupEnabled;
+                if (s.warmupMuted !== undefined) warmupMuted = s.warmupMuted;
                 if (s.intervalEnabled !== undefined) intervalEnabled = s.intervalEnabled;
                 if (s.cooldownEnabled !== undefined) cooldownEnabled = s.cooldownEnabled;
                 if (s.cooldownMin !== undefined) cooldownSettings.min = s.cooldownMin;
@@ -2818,9 +2820,11 @@
         document.getElementById('itvWarmupEnabled').checked = warmupEnabled;
         document.getElementById('itvWarmupMin').value = warmupSettings.min;
         document.getElementById('itvWarmupSpeed').value = warmupSettings.speed;
+        document.getElementById('itvWarmupMute').checked = warmupMuted;
         if (warmupEnabled) {
             document.getElementById('itvWarmupTimeLabel').style.display = '';
             document.getElementById('itvWarmupSpeedLabel').style.display = '';
+            document.getElementById('itvWarmupMuteLabel').style.display = 'flex';
         }
         document.getElementById('itvCooldownEnabled').checked = cooldownEnabled;
         document.getElementById('itvCooldownMin').value = cooldownSettings.min;
@@ -2866,6 +2870,7 @@
         warmupEnabled = document.getElementById('itvWarmupEnabled').checked;
         document.getElementById('itvWarmupTimeLabel').style.display = warmupEnabled ? '' : 'none';
         document.getElementById('itvWarmupSpeedLabel').style.display = warmupEnabled ? '' : 'none';
+        document.getElementById('itvWarmupMuteLabel').style.display = warmupEnabled ? 'flex' : 'none';
     }
 
     function onCooldownToggle() {
@@ -2882,6 +2887,7 @@
             slowSpeed: parseFloat(document.getElementById('itvSlowSpeed').value) || 6.0,
         };
         warmupEnabled = document.getElementById('itvWarmupEnabled').checked;
+        warmupMuted = document.getElementById('itvWarmupMute').checked;
         warmupSettings = {
             min:   parseFloat(document.getElementById('itvWarmupMin').value)   || 3,
             speed: parseFloat(document.getElementById('itvWarmupSpeed').value) || 5.0,
@@ -2894,7 +2900,7 @@
         totalCycles = parseInt(document.getElementById('itvTotalCycles').value) || 0;
         const saved = {
             ...intervalSettings, intervalEnabled,
-            warmupEnabled, warmupMin: warmupSettings.min, warmupSpeed: warmupSettings.speed,
+            warmupEnabled, warmupMuted, warmupMin: warmupSettings.min, warmupSpeed: warmupSettings.speed,
             cooldownEnabled, cooldownMin: cooldownSettings.min, cooldownSpeed: cooldownSettings.speed,
             totalCycles,
         };
@@ -2916,7 +2922,7 @@
     function startWarmupPhase() {
         isInWarmup = true;
         warmupRemainSec = Math.round(warmupSettings.min * 60);
-        metronomeMuted = true;
+        metronomeMuted = warmupMuted;
         speak(`워밍업 시작 ${warmupSettings.speed} 킬로미터`);
         renderIntervalDisplay();
     }
@@ -2983,7 +2989,6 @@
             document.getElementById('metroPhaseTime').textContent = setTime(warmupRemainSec);
             document.getElementById('metroPhaseSpeed').textContent = warmupSettings.speed.toFixed(1) + ' km/h';
             document.getElementById('metroPhasePace').textContent = '페이스 ' + speedToPace(warmupSettings.speed) + ' /km';
-            document.getElementById('metroCycleCount').textContent = '워밍업';
             return;
         }
         if (isInCooldown) {
@@ -2992,17 +2997,15 @@
             document.getElementById('metroPhaseTime').textContent = setTime(cooldownRemainSec);
             document.getElementById('metroPhaseSpeed').textContent = cooldownSettings.speed.toFixed(1) + ' km/h';
             document.getElementById('metroPhasePace').textContent = '페이스 ' + speedToPace(cooldownSettings.speed) + ' /km';
-            document.getElementById('metroCycleCount').textContent = '쿨다운';
             return;
         }
         const isFast = intervalPhase === 'fast';
-        lbl.textContent = isFast ? '🏃 빠르게 뛰기' : '🚶 천천히 뛰기';
+        lbl.textContent = (isFast ? '🏃 빠르게 뛰기' : '🚶 천천히 뛰기') + '  ' + intervalCycle + '세트';
         lbl.className = 'metro-phase-label ' + (isFast ? 'phase-fast' : 'phase-slow');
         document.getElementById('metroPhaseTime').textContent = setTime(intervalPhaseRemainSec);
         const speed = isFast ? intervalSettings.fastSpeed : intervalSettings.slowSpeed;
         document.getElementById('metroPhaseSpeed').textContent = speed.toFixed(1) + ' km/h';
         document.getElementById('metroPhasePace').textContent = '페이스 ' + speedToPace(speed) + ' /km';
-        document.getElementById('metroCycleCount').textContent = intervalCycle + '세트';
     }
     let metronomeTimerInterval = null;
     let metronomeScheduleInterval = null;

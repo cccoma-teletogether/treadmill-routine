@@ -2105,7 +2105,7 @@
                     <div class="metro-phase-inputs">
                         <label style="display:flex;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvCooldownEnabled" onchange="onCooldownToggle()"> 사용</label>
                         <label id="itvCooldownTimeLabel" style="display:none">시간<input type="number" id="itvCooldownMin" min="0.5" max="30" step="0.5" value="3">분</label>
-                        <label id="itvCooldownSpeedLabel" style="display:none">속도<input type="number" id="itvCooldownSpeed" min="1" max="25" step="0.5" value="5.0">km/h</label>
+                        <label id="itvCooldownSpeedLabel" style="display:none">목표<input type="number" id="itvCooldownSpeed" min="1" max="25" step="0.5" value="5.0">km/h</label>
                     </div>
                 </div>
                 <div style="margin-top:6px;display:flex;align-items:center;gap:6px;font-size:0.82em;">
@@ -2788,6 +2788,8 @@
     let cooldownSettings = { min: 3, speed: 5.0 };
     let isInCooldown = false;
     let cooldownRemainSec = 0;
+    let cooldownTotalSec = 0;
+    let cooldownStartSpeed = 0;
     let totalCycles = 0;
 
     function speedToPace(speed) {
@@ -2920,7 +2922,7 @@
                 savedAt: Date.now(),
                 elapsedSec: metronomeElapsedSec,
                 isInWarmup, warmupRemainSec,
-                isInCooldown, cooldownRemainSec,
+                isInCooldown, cooldownRemainSec, cooldownTotalSec, cooldownStartSpeed,
                 intervalPhase, intervalPhaseRemainSec, intervalCycle,
             }));
         } catch(e) {}
@@ -2941,6 +2943,8 @@
             warmupRemainSec = rs.warmupRemainSec || 0;
             isInCooldown = !!rs.isInCooldown;
             cooldownRemainSec = rs.cooldownRemainSec || 0;
+            cooldownTotalSec = rs.cooldownTotalSec || cooldownRemainSec;
+            cooldownStartSpeed = rs.cooldownStartSpeed || intervalSettings.slowSpeed;
             intervalPhase = rs.intervalPhase || 'slow';
             intervalPhaseRemainSec = rs.intervalPhaseRemainSec || 0;
             intervalCycle = rs.intervalCycle || 1;
@@ -2975,7 +2979,9 @@
 
     function startCooldownPhase() {
         isInCooldown = true;
-        cooldownRemainSec = Math.round(cooldownSettings.min * 60);
+        cooldownTotalSec = Math.round(cooldownSettings.min * 60);
+        cooldownRemainSec = cooldownTotalSec;
+        cooldownStartSpeed = intervalSettings.slowSpeed;
         metronomeMuted = true;
         speak(`쿨다운 시작 ${cooldownSettings.speed} 킬로미터`);
         renderIntervalDisplay();
@@ -3044,8 +3050,11 @@
             lbl.className = 'metro-phase-label phase-cooldown';
             cycleEl.style.display = 'none';
             document.getElementById('metroPhaseTime').textContent = setTime(cooldownRemainSec);
-            document.getElementById('metroPhaseSpeed').textContent = cooldownSettings.speed.toFixed(1) + ' km/h';
-            document.getElementById('metroPhasePace').textContent = '페이스 ' + speedToPace(cooldownSettings.speed) + ' /km';
+            const cdTotal = cooldownTotalSec > 0 ? cooldownTotalSec : cooldownRemainSec;
+            const cdProgress = cdTotal > 0 ? 1 - (cooldownRemainSec / cdTotal) : 1;
+            const cdSpeed = cooldownStartSpeed + (cooldownSettings.speed - cooldownStartSpeed) * cdProgress;
+            document.getElementById('metroPhaseSpeed').textContent = cdSpeed.toFixed(1) + ' km/h';
+            document.getElementById('metroPhasePace').textContent = '페이스 ' + speedToPace(cdSpeed) + ' /km';
             return;
         }
         const isFast = intervalPhase === 'fast';

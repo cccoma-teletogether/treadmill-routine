@@ -2811,6 +2811,9 @@
     function toggleIntervalSettings() {
         const el = document.getElementById('metroIntervalSettings');
         el.style.display = el.style.display === 'none' ? '' : 'none';
+        if (el.style.display !== 'none') {
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        }
     }
 
     function onWarmupToggle() {

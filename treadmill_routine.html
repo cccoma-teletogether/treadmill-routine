@@ -2067,7 +2067,7 @@
         <div class="metro-interval-panel">
             <div class="metro-interval-header">
                 <label class="metro-interval-toggle-label">
-                    <input type="checkbox" id="metroIntervalEnabled" onchange="onIntervalToggle()">
+                    <input type="checkbox" id="metroIntervalEnabled" onchange="onIntervalToggle()" autocomplete="off">
                     인터벌 모드 (2뛰·1뛰)
                 </label>
                 <button class="metro-settings-btn" id="metroSettingsBtn" style="display:none" onclick="toggleIntervalSettings()">⚙ 설정</button>
@@ -2911,12 +2911,54 @@
         setTimeout(() => btn.textContent = '💾 저장', 1500);
     }
 
+    function saveRunningState() {
+        try {
+            localStorage.setItem('metroRunningState', JSON.stringify({
+                savedAt: Date.now(),
+                elapsedSec: metronomeElapsedSec,
+                isInWarmup, warmupRemainSec,
+                isInCooldown, cooldownRemainSec,
+                intervalPhase, intervalPhaseRemainSec, intervalCycle,
+            }));
+        } catch(e) {}
+    }
+
+    function clearRunningState() {
+        try { localStorage.removeItem('metroRunningState'); } catch(e) {}
+    }
+
+    function restoreRunningState() {
+        if (!intervalEnabled) return;
+        try {
+            const rs = JSON.parse(localStorage.getItem('metroRunningState') || 'null');
+            if (!rs) return;
+            if (Date.now() - rs.savedAt > 600000) { clearRunningState(); return; } // 10분 초과
+            metronomeElapsedSec = rs.elapsedSec || 0;
+            isInWarmup = !!rs.isInWarmup;
+            warmupRemainSec = rs.warmupRemainSec || 0;
+            isInCooldown = !!rs.isInCooldown;
+            cooldownRemainSec = rs.cooldownRemainSec || 0;
+            intervalPhase = rs.intervalPhase || 'slow';
+            intervalPhaseRemainSec = rs.intervalPhaseRemainSec || 0;
+            intervalCycle = rs.intervalCycle || 1;
+            metronomeMuted = isInWarmup ? warmupMuted
+                           : (isInCooldown || intervalPhase === 'fast') ? true : false;
+            const m = Math.floor(metronomeElapsedSec / 60);
+            const s = metronomeElapsedSec % 60;
+            document.getElementById('metroElapsed').textContent =
+                String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+            document.getElementById('btnMetroNext').style.display = '';
+            renderIntervalDisplay();
+        } catch(e) {}
+    }
+
     function autoStopMetronome(msg) {
         metronomeRunning = false;
         clearInterval(metronomeScheduleInterval);
         clearInterval(metronomeTimerInterval);
         document.getElementById('btnMetro').textContent = '▶ 시작';
         document.getElementById('btnMetroNext').style.display = 'none';
+        clearRunningState();
         if (msg) speak(msg);
     }
 
@@ -3127,6 +3169,7 @@
                             renderIntervalDisplay();
                         }
                     }
+                    saveRunningState();
                 }
             }, 1000);
             document.getElementById('btnMetro').textContent = '⏸ 정지';
@@ -3149,6 +3192,7 @@
         document.getElementById('btnMetro').textContent = '▶ 시작';
         document.getElementById('btnMetroNext').style.display = 'none';
         document.getElementById('metroIntervalDisplay').style.display = 'none';
+        clearRunningState();
     }
 
     // ===== 배경음악 제어 =====
@@ -4487,6 +4531,7 @@
     loadRoutineList();
     renderRoutineList();
     loadIntervalSettings();
+    restoreRunningState();
     switchTab('timer');
     // 브라우저가 스크롤을 복원하더라도 다음 프레임에서 강제로 최상단으로 되돌린다
     requestAnimationFrame(() => {

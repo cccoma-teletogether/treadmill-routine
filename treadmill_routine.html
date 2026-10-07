@@ -2012,9 +2012,10 @@
             <input type="url" id="nsUrl" placeholder="https://yoursite.up.railway.app" autocomplete="off" style="width:100%;padding:7px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;">
             <input type="text" id="nsToken" placeholder="API 토큰 (선택사항)" autocomplete="off" style="width:100%;padding:7px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;">
             <div class="setting-actions">
-                <button class="btn-save-settings" onclick="saveNightscoutSettings()">저장</button>
-                <button class="btn-reset-settings" onclick="testNightscoutConnection()">연결 확인</button>
+                <button class="btn-save-settings" onclick="saveNightscoutSettings(this)">저장</button>
+                <button class="btn-reset-settings" onclick="testNightscoutConnection(this)">연결 확인</button>
             </div>
+            <div id="nsStatus" style="display:none;font-size:0.82em;margin-top:6px;padding:5px 8px;border-radius:6px;background:#f8f8f8;word-break:break-all;"></div>
             <div style="margin-top:12px;">
                 <div style="font-size:0.82em;font-weight:600;color:#555;margin-bottom:6px;">혈당 범위 색상</div>
                 <div style="font-size:0.76em;color:#999;margin-bottom:7px;">낮은 값부터 순서대로 설정. 마지막 항목은 그 이상 전체에 적용됩니다.</div>
@@ -2932,14 +2933,20 @@
         if (nightscoutUrl) startBGPolling();
     }
 
-    function saveNightscoutSettings() {
+    function nsStatus(msg, isError) {
+        const el = document.getElementById('nsStatus');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.color = isError ? '#e74c3c' : '#27ae60';
+        el.style.display = msg ? '' : 'none';
+    }
+
+    function saveNightscoutSettings(btn) {
         nightscoutUrl = document.getElementById('nsUrl').value.trim().replace(/\/$/, '');
         nightscoutToken = document.getElementById('nsToken').value.trim();
         try { localStorage.setItem('nightscoutSettings', JSON.stringify({ url: nightscoutUrl, token: nightscoutToken })); } catch(e) {}
         startBGPolling();
-        const btn = event.target;
-        btn.textContent = '✓ 저장됨';
-        setTimeout(() => btn.textContent = '저장', 1500);
+        if (btn) { btn.textContent = '✓ 저장됨'; setTimeout(() => btn.textContent = '저장', 1500); }
     }
 
     async function fetchBG() {
@@ -2975,24 +2982,26 @@
         }
     }
 
-    async function testNightscoutConnection() {
-        if (!nightscoutUrl) { alert('서버 주소를 먼저 입력하고 저장하세요.'); return; }
-        const btn = event.target;
-        btn.textContent = '확인 중…';
+    async function testNightscoutConnection(btn) {
+        const url0 = document.getElementById('nsUrl').value.trim().replace(/\/$/, '');
+        if (!url0) { nsStatus('서버 주소를 입력하고 저장하세요.', true); return; }
+        if (btn) btn.textContent = '확인 중…';
+        nsStatus('연결 중…', false);
         try {
-            let url = nightscoutUrl + '/api/v1/entries/current.json';
-            if (nightscoutToken) url += '?token=' + encodeURIComponent(nightscoutToken);
+            let url = url0 + '/api/v1/entries/current.json';
+            const tok = document.getElementById('nsToken').value.trim();
+            if (tok) url += '?token=' + encodeURIComponent(tok);
             const res = await fetch(url, { cache: 'no-store' });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error('서버 응답 오류 HTTP ' + res.status);
             const data = await res.json();
             const entry = Array.isArray(data) ? data[0] : data;
-            if (!entry || entry.sgv == null) throw new Error('데이터 없음');
-            alert('연결 성공 ✓\n현재 혈당: ' + entry.sgv + ' mg/dL');
+            if (!entry || entry.sgv == null) throw new Error('혈당 데이터 없음');
+            nsStatus('✓ 연결 성공 — 현재 혈당 ' + entry.sgv + ' mg/dL', false);
             fetchBG();
         } catch(e) {
-            alert('연결 실패: ' + e.message);
+            nsStatus('✗ 연결 실패: ' + e.message, true);
         }
-        btn.textContent = '연결 확인';
+        if (btn) btn.textContent = '연결 확인';
     }
 
     function startBGPolling() {

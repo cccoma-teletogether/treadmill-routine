@@ -2844,6 +2844,7 @@
     let nightscoutUrl = '';
     let nightscoutToken = '';
     let bgPollTimer = null;
+    let bgLastDate = 0;
     let bgRanges = [
         { max: 70,   color: '#e74c3c' },
         { max: 154,  color: '#27ae60' },
@@ -2969,11 +2970,10 @@
             const data = await res.json();
             const entry = Array.isArray(data) ? data[0] : data;
             if (!entry || entry.sgv == null) throw new Error('데이터 없음');
+            bgLastDate = entry.date || 0;
             const sgv = entry.sgv;
             const arrow = BG_TREND[entry.direction] || '';
-            const ageMs = Date.now() - (entry.date || 0);
-            const ageMins = Math.floor(ageMs / 60000);
-            const ageStr = ageMins < 1 ? '방금' : ageMins < 60 ? ageMins + '분 전' : Math.floor(ageMins / 60) + '시간 전';
+            const ageStr = bgAgeStr();
             const color = getBGColor(sgv);
             document.getElementById('bgValue').textContent = sgv + ' mg/dL';
             document.getElementById('bgValue').style.color = color;
@@ -3013,11 +3013,23 @@
         if (btn) btn.textContent = '연결 확인';
     }
 
+    function bgAgeStr() {
+        if (!bgLastDate) return '';
+        const mins = Math.floor((Date.now() - bgLastDate) / 60000);
+        return mins < 1 ? '방금' : mins < 60 ? mins + '분 전' : Math.floor(mins / 60) + '시간 전';
+    }
+
     function startBGPolling() {
         if (bgPollTimer) clearInterval(bgPollTimer);
         if (!nightscoutUrl) { document.getElementById('bgWidget').style.display = 'none'; return; }
         fetchBG();
         bgPollTimer = setInterval(fetchBG, 60000);
+        setInterval(() => {
+            if (bgLastDate) {
+                const el = document.getElementById('bgTime');
+                if (el) el.textContent = bgAgeStr();
+            }
+        }, 30000);
     }
 
     function loadIntervalSettings() {

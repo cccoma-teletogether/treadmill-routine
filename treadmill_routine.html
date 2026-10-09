@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="data:,">
     <title>러닝머신 루틴 타이머</title>
     <style>
         :root {
@@ -1537,6 +1538,7 @@
             body {
                 padding: 0;
                 overflow: hidden;
+                background-color: var(--color-card-light);
             }
 
             .wrapper {
@@ -1548,22 +1550,19 @@
             .hamburger-btn {
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                justify-content: center;
                 position: fixed;
                 top: 0;
                 left: 0;
+                width: 52px;
                 height: 46px;
-                padding: 0 12px;
                 background: var(--color-primary);
                 color: white;
                 border: none;
                 z-index: 1002;
-                font-size: 0.9em;
-                font-weight: bold;
+                font-size: 1.4em;
                 cursor: pointer;
-                white-space: nowrap;
             }
-            .hamburger-icon { font-size: 1.2em; }
 
             .routine-selector {
                 position: fixed;
@@ -1573,7 +1572,7 @@
                 display: flex;
                 align-items: center;
                 height: 46px;
-                padding: 0 8px 0 130px;
+                padding: 0 8px 0 58px;
                 background: var(--color-card-light, #fff);
                 box-shadow: 0 2px 6px rgba(0,0,0,0.1);
                 z-index: 1001;
@@ -1889,10 +1888,7 @@
     </select>
 </div>
 
-<button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()">
-    <span class="hamburger-icon">☰</span>
-    <span class="hamburger-tab-name" id="mobileTabName">타이머</span>
-</button>
+<button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()">☰</button>
 <div class="tab-buttons" id="tabButtons">
     <button class="tab-button active" onclick="switchTab('timer')">타이머</button>
     <button class="tab-button" onclick="switchTab('routine')">루틴</button>

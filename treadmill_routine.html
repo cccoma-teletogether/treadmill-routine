@@ -2619,6 +2619,22 @@
         }
     }
 
+    function playCountdownTick(remainSec) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = remainSec === 1 ? 880 : 440;
+        const dur = remainSec === 1 ? 0.25 : 0.12;
+        const t = audioCtx.currentTime;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.28, t + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + dur);
+    }
+
     function beep(frequency = 880, durationMs = 200) {
         if (!soundPrefs.beep) return;
         if (!audioCtx) return;
@@ -3532,6 +3548,7 @@
                             isInWarmup = false;
                             startIntervalPhase('slow');
                         } else {
+                            if (warmupRemainSec <= 5) playCountdownTick(warmupRemainSec);
                             renderIntervalDisplay();
                         }
                     } else if (isInCooldown) {
@@ -3540,6 +3557,7 @@
                             isInCooldown = false;
                             autoStopMetronome('운동 완료');
                         } else {
+                            if (cooldownRemainSec <= 5) playCountdownTick(cooldownRemainSec);
                             renderIntervalDisplay();
                         }
                     } else {
@@ -3559,6 +3577,7 @@
                                 }
                             }
                         } else {
+                            if (intervalPhaseRemainSec <= 5) playCountdownTick(intervalPhaseRemainSec);
                             renderIntervalDisplay();
                         }
                     }

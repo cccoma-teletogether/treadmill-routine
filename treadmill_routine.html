@@ -614,12 +614,12 @@
             margin-top: 1px;
         }
         .metro-cycle-count { font-size: 0.85em; color: #888; }
-        .bg-widget { display:flex; align-items:center; justify-content:center; gap:8px; padding:7px 16px; border-radius:10px; background:#f0f8ff; border:1.5px solid #b3d9ff; font-size:1.05em; font-weight:700; margin-top:8px; width:100%; box-sizing:border-box; }
+        .bg-widget { display:flex; align-items:center; justify-content:center; gap:8px; padding:9px 16px; border-radius:10px; background:#f0f8ff; border:1.5px solid #b3d9ff; font-size:1.4em; font-weight:700; margin-top:8px; width:100%; box-sizing:border-box; }
         .bg-widget.bg-normal { background:#f0fff4; border-color:#86e89a; color:#1e8449; }
         .bg-widget.bg-low    { background:#fff0f0; border-color:#ffaaaa; color:#c0392b; }
         .bg-widget.bg-high   { background:#fff8e1; border-color:#ffd54f; color:#e67e22; }
         .bg-widget.bg-danger { background:#fff0f0; border-color:#e74c3c; color:#c0392b; }
-        .bg-time { font-size:0.72em; font-weight:400; color:#888; margin-left:2px; }
+        .bg-time { font-size:0.6em; font-weight:400; color:#888; margin-left:2px; }
         @media (prefers-color-scheme: dark) {
             .bg-widget { background:#1a2a3a; border-color:#2e4a6a; color:#8ab4d4; }
             .bg-widget.bg-normal { background:#0f2a18; border-color:#27ae60; color:#58d68d; }
@@ -2223,17 +2223,19 @@
                 </div>
                 <div class="metro-interval-row">
                     <div class="metro-interval-phase metro-phase-slow">
-                        <div class="metro-phase-name">🚶 천천히<span class="metro-phase-mute-hint">켜짐</span></div>
+                        <div class="metro-phase-name">🚶 천천히</div>
                         <div class="metro-phase-inputs">
                             <label><input type="number" id="itvSlowMin" min="0.5" max="30" step="0.5" value="2">분</label>
                             <label><input type="number" id="itvSlowSpeed" min="1" max="25" step="0.5" value="6.0">km/h</label>
+                            <label style="display:flex;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvSlowMute" onchange="slowMuted = this.checked; if (intervalEnabled && intervalPhase === 'slow' && !isInWarmup && !isInCooldown) metronomeMuted = slowMuted;"> 무음</label>
                         </div>
                     </div>
                     <div class="metro-interval-phase metro-phase-fast">
-                        <div class="metro-phase-name">🏃 빠르게<span class="metro-phase-mute-hint">꺼짐</span></div>
+                        <div class="metro-phase-name">🏃 빠르게</div>
                         <div class="metro-phase-inputs">
                             <label><input type="number" id="itvFastMin" min="0.5" max="30" step="0.5" value="1">분</label>
                             <label><input type="number" id="itvFastSpeed" min="1" max="25" step="0.5" value="9.0">km/h</label>
+                            <label style="display:flex;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvFastMute" checked onchange="fastMuted = this.checked; if (intervalEnabled && intervalPhase === 'fast' && !isInWarmup && !isInCooldown) metronomeMuted = fastMuted;"> 무음</label>
                         </div>
                     </div>
                 </div>
@@ -2944,6 +2946,8 @@
     let warmupEnabled = false;
     let warmupSettings = { min: 3, speed: 5.0 };
     let warmupMuted = true;
+    let slowMuted = false;
+    let fastMuted = true;
     let isInWarmup = false;
     let warmupRemainSec = 0;
     let cooldownEnabled = false;
@@ -3178,6 +3182,8 @@
                 if (s.warmupSpeed !== undefined) warmupSettings.speed = s.warmupSpeed;
                 if (s.warmupEnabled !== undefined) warmupEnabled = s.warmupEnabled;
                 if (s.warmupMuted !== undefined) warmupMuted = s.warmupMuted;
+                if (s.slowMuted !== undefined) slowMuted = s.slowMuted;
+                if (s.fastMuted !== undefined) fastMuted = s.fastMuted;
                 if (s.intervalEnabled !== undefined) intervalEnabled = s.intervalEnabled;
                 if (s.cooldownEnabled !== undefined) cooldownEnabled = s.cooldownEnabled;
                 if (s.cooldownMin !== undefined) cooldownSettings.min = s.cooldownMin;
@@ -3189,6 +3195,8 @@
         document.getElementById('itvFastSpeed').value = intervalSettings.fastSpeed;
         document.getElementById('itvSlowMin').value = intervalSettings.slowMin;
         document.getElementById('itvSlowSpeed').value = intervalSettings.slowSpeed;
+        document.getElementById('itvSlowMute').checked = slowMuted;
+        document.getElementById('itvFastMute').checked = fastMuted;
         document.getElementById('itvWarmupEnabled').checked = warmupEnabled;
         document.getElementById('itvWarmupMin').value = warmupSettings.min;
         document.getElementById('itvWarmupSpeed').value = warmupSettings.speed;
@@ -3263,6 +3271,8 @@
         };
         warmupEnabled = document.getElementById('itvWarmupEnabled').checked;
         warmupMuted = document.getElementById('itvWarmupMute').checked;
+        slowMuted = document.getElementById('itvSlowMute').checked;
+        fastMuted = document.getElementById('itvFastMute').checked;
         warmupSettings = {
             min:   parseFloat(document.getElementById('itvWarmupMin').value)   || 3,
             speed: parseFloat(document.getElementById('itvWarmupSpeed').value) || 5.0,
@@ -3276,6 +3286,7 @@
         const saved = {
             ...intervalSettings, intervalEnabled,
             warmupEnabled, warmupMuted, warmupMin: warmupSettings.min, warmupSpeed: warmupSettings.speed,
+            slowMuted, fastMuted,
             cooldownEnabled, cooldownMin: cooldownSettings.min, cooldownSpeed: cooldownSettings.speed,
             totalCycles,
         };
@@ -3318,7 +3329,8 @@
             intervalPhaseRemainSec = rs.intervalPhaseRemainSec || 0;
             intervalCycle = rs.intervalCycle || 1;
             metronomeMuted = isInWarmup ? warmupMuted
-                           : (isInCooldown || intervalPhase === 'fast') ? true : false;
+                           : isInCooldown ? true
+                           : intervalPhase === 'fast' ? fastMuted : slowMuted;
             const m = Math.floor(metronomeElapsedSec / 60);
             const s = metronomeElapsedSec % 60;
             document.getElementById('metroElapsed').textContent =
@@ -3387,12 +3399,12 @@
         intervalPhase = phase;
         if (phase === 'fast') {
             intervalPhaseRemainSec = Math.round(intervalSettings.fastMin * 60);
-            metronomeMuted = true;
+            metronomeMuted = fastMuted;
             speak(`빠르게 뛰기 ${intervalSettings.fastSpeed} 킬로미터`);
         } else {
             intervalPhaseRemainSec = Math.round(intervalSettings.slowMin * 60);
-            metronomeMuted = false;
-            metronomeNextBeatTime = audioCtx ? audioCtx.currentTime + 0.05 : 0;
+            metronomeMuted = slowMuted;
+            if (!slowMuted) metronomeNextBeatTime = audioCtx ? audioCtx.currentTime + 0.05 : 0;
             speak(`천천히 뛰기 ${intervalSettings.slowSpeed} 킬로미터`);
         }
         renderIntervalDisplay();

@@ -55,6 +55,9 @@
                 background-color: var(--color-card-dark);
                 color: var(--color-text-dark);
             }
+            .tab-buttons, .routine-selector {
+                background: var(--color-card-dark) !important;
+            }
             .time-box, .next-phase {
                 background-color: rgba(255, 255, 255, 0.1);
             }
@@ -1530,24 +1533,62 @@
                 gap: 0;
             }
 
-            .tab-buttons {
-                display: flex;
+            /* 2줄 헤더: 루틴선택(위) + 탭버튼(아래) */
+            .routine-selector {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                display: block;
+                z-index: 1001;
+                padding: 5px 8px;
+                background: var(--color-card-light, #fff);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                box-sizing: border-box;
+            }
+            .routine-selector select {
+                width: 100%;
+                box-sizing: border-box;
             }
 
-            .routine-selector {
-                display: block;
+            .tab-buttons {
+                position: fixed;
+                top: 44px;
+                left: 0;
+                right: 0;
+                width: 100%;
+                display: flex;
+                gap: 3px;
+                padding: 4px 6px;
+                background: var(--color-card-light, #fff);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                box-sizing: border-box;
+                z-index: 1000;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .tab-buttons::-webkit-scrollbar { display: none; }
+            .tab-button {
+                flex: 1;
+                min-width: 0;
+                padding: 7px 6px;
+                font-size: 0.76em;
+                border-radius: 6px;
+                box-shadow: none;
+                white-space: nowrap;
             }
 
             .container {
                 max-width: none;
                 padding: 15px;
-                margin-top: 50px;
+                margin-top: 88px;
                 display: none;
             }
 
             .container.active {
                 display: flex;
-                height: calc(100vh - 50px);
+                height: calc(100vh - 88px);
                 box-sizing: border-box;
                 overflow-y: auto;
             }
@@ -1558,9 +1599,9 @@
             .routine-list {
                 max-width: none;
                 padding: 15px;
-                margin-top: 50px;
+                margin-top: 88px;
                 display: none;
-                height: calc(100vh - 50px);
+                height: calc(100vh - 88px);
                 box-sizing: border-box;
             }
 
@@ -1602,8 +1643,8 @@
             .settings-panel {
                 max-width: none;
                 padding: 15px 15px 100px;
-                margin-top: 50px;
-                height: calc(100vh - 50px);
+                margin-top: 88px;
+                height: calc(100vh - 88px);
                 overflow-x: hidden;
             }
 

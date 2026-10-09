@@ -1760,40 +1760,14 @@
         }
 
         @media (max-width: 480px) {
-            /* 좁은 화면에서는 헤더가 한 줄에 다 못 들어가므로 두 줄로 쌓는다 */
-            .routine-selector {
-                left: 10px;
-                right: 10px;
-                top: 10px;
-            }
-
-            .routine-selector select {
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            .tab-buttons {
-                top: 56px;
-                right: 10px;
-                left: 10px;
-                justify-content: flex-end;
-                flex-wrap: nowrap;
-                gap: 4px;
-            }
-
-            .tab-button {
-                padding: 5px 7px;
-                font-size: 0.78em;
-                flex-shrink: 0;
-            }
-
-            .container, .routine-list, .settings-panel {
-                padding: 12px;
-                margin-top: 100px;
+            /* 햄버거 단일 헤더(46px) 기준으로 정렬 */
+            .container, .routine-list {
+                padding: 4px 12px 12px;
+                margin-top: 46px;
             }
 
             .settings-panel {
-                height: calc(100vh - 100px);
+                height: calc(100vh - 46px);
             }
 
             h1 {

@@ -1659,7 +1659,23 @@
                 display: flex;
             }
 
-            /* 모바일 타이머 모드: wrapper가 스크롤 컨테이너 (body는 overflow:hidden 유지) */
+            /* 모바일 메트로놈/타이머 모드: wrapper가 스크롤 컨테이너 (body는 overflow:hidden 유지)
+               — Android에서 container overflow-y:auto + scrollIntoView 후 터치스크롤 깨짐 방지 */
+            body[data-mobile-tab="metronome"] .wrapper {
+                flex-direction: column;
+                height: 100vh;
+                overflow-y: auto;
+                overflow-x: hidden;
+                overscroll-behavior-y: contain;
+            }
+            body[data-mobile-tab="metronome"] .container.active {
+                flex: 0 0 auto;
+                overflow-y: visible;
+                height: auto;
+                box-sizing: border-box;
+                width: 100%;
+            }
+
             body[data-mobile-tab="timer"] .wrapper {
                 flex-direction: column;
                 height: 100vh;          /* 스크롤 컨테이너 높이 고정 */
@@ -3223,12 +3239,12 @@
         const el = document.getElementById('metroIntervalSettings');
         const willOpen = el.style.display === 'none';
         el.style.display = willOpen ? '' : 'none';
+        // wrapper가 스크롤 컨테이너이므로 wrapper를 스크롤 (scrollIntoView는 Android에서 터치스크롤을 깨뜨림)
+        const wrapper = document.querySelector('.wrapper');
         if (willOpen) {
-            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+            setTimeout(() => { if (wrapper) wrapper.scrollTop = wrapper.scrollHeight; }, 50);
         } else {
-            // 닫을 때 컨테이너 스크롤 위치 초기화 (Android에서 빈 공간/스크롤 잠김 방지)
-            const tab = document.getElementById('metronomeTab');
-            if (tab) tab.scrollTop = 0;
+            if (wrapper) wrapper.scrollTop = 0;
         }
     }
 

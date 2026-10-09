@@ -3221,9 +3221,14 @@
 
     function toggleIntervalSettings() {
         const el = document.getElementById('metroIntervalSettings');
-        el.style.display = el.style.display === 'none' ? '' : 'none';
-        if (el.style.display !== 'none') {
+        const willOpen = el.style.display === 'none';
+        el.style.display = willOpen ? '' : 'none';
+        if (willOpen) {
             setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        } else {
+            // 닫을 때 컨테이너 스크롤 위치 초기화 (Android에서 빈 공간/스크롤 잠김 방지)
+            const tab = document.getElementById('metronomeTab');
+            if (tab) tab.scrollTop = 0;
         }
     }
 

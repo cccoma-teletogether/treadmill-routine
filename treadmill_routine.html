@@ -554,7 +554,7 @@
         .metro-phase-inputs {
             display: flex;
             gap: 6px;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             align-items: center;
         }
         .metro-phase-inputs label {
@@ -2210,7 +2210,7 @@
                 <!-- 워밍업 -->
                 <div class="metro-interval-phase metro-phase-warmup" style="margin-bottom:6px;">
                     <div class="metro-phase-name">🚶 워밍업</div>
-                    <div class="metro-phase-inputs">
+                    <div class="metro-phase-inputs" style="flex-wrap:nowrap">
                         <label style="display:flex;align-items:center;gap:4px;flex:none;"><input type="checkbox" id="itvWarmupEnabled" onchange="onWarmupToggle()"> 사용</label>
                         <label id="itvWarmupTimeLabel" style="display:none">시간<input type="number" id="itvWarmupMin" min="0.5" max="30" step="0.5" value="3">분</label>
                         <label id="itvWarmupSpeedLabel" style="display:none">속도<input type="number" id="itvWarmupSpeed" min="1" max="25" step="0.5" value="5.0">km/h</label>

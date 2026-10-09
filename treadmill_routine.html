@@ -619,6 +619,8 @@
         .bg-widget.bg-low    { background:#fff0f0; border-color:#ffaaaa; color:#c0392b; }
         .bg-widget.bg-high   { background:#fff8e1; border-color:#ffd54f; color:#e67e22; }
         .bg-widget.bg-danger { background:#fff0f0; border-color:#e74c3c; color:#c0392b; }
+        .bg-num  { font-size:1.7em; line-height:1; letter-spacing:-0.5px; }
+        .bg-unit { font-size:0.65em; font-weight:600; opacity:0.75; }
         .bg-time { font-size:0.6em; font-weight:400; color:#888; margin-left:2px; }
         @media (prefers-color-scheme: dark) {
             .bg-widget { background:#1a2a3a; border-color:#2e4a6a; color:#8ab4d4; }
@@ -1626,7 +1628,7 @@
 
             .container {
                 max-width: none;
-                padding: 15px;
+                padding: 8px 15px 15px;
                 margin-top: 46px;
                 display: none;
             }
@@ -1637,9 +1639,9 @@
                 box-sizing: border-box;
                 overflow-y: auto;
             }
-            #metronomeTab { padding: 12px 16px; }
-            #metronomeTab .metro-elapsed { font-size: 3.5em; margin: 8px 0 4px; }
-            #metronomeTab .metro-bpm-label { margin-bottom: 12px; }
+            #metronomeTab { padding: 4px 16px 12px; }
+            #metronomeTab .metro-elapsed { font-size: 3.5em; margin: 2px 0 2px; }
+            #metronomeTab .metro-bpm-label { margin-bottom: 8px; }
 
             .routine-list {
                 max-width: none;
@@ -1986,7 +1988,7 @@
         <!-- 혈당 위젯 (타이머 탭) -->
         <div class="bg-widget" id="bgWidgetTimer" style="display:none">
             <span>💉</span>
-            <span id="bgValueTimer">-- mg/dL</span>
+            <span class="bg-num" id="bgValueTimer">--</span><span class="bg-unit"> mg/dL</span>
             <span id="bgTrendTimer" style="font-size:1.1em"></span>
             <span class="bg-time" id="bgTimeTimer"></span>
         </div>
@@ -2196,7 +2198,7 @@
         <!-- 혈당 위젯 -->
         <div class="bg-widget" id="bgWidget" style="display:none">
             <span>💉</span>
-            <span id="bgValue">-- mg/dL</span>
+            <span class="bg-num" id="bgValue">--</span><span class="bg-unit"> mg/dL</span>
             <span id="bgTrend" style="font-size:1.1em"></span>
             <span class="bg-time" id="bgTime"></span>
         </div>
@@ -3105,11 +3107,10 @@
             const arrow = BG_TREND[entry.direction] || '';
             const ageStr = bgAgeStr();
             const color = getBGColor(sgv);
-            const txt = sgv + ' mg/dL';
             for (const sfx of ['', 'Timer']) {
                 const w = document.getElementById('bgWidget' + sfx);
                 if (!w) continue;
-                document.getElementById('bgValue' + sfx).textContent = txt;
+                document.getElementById('bgValue' + sfx).textContent = String(sgv);
                 document.getElementById('bgValue' + sfx).style.color = color;
                 document.getElementById('bgTrend' + sfx).textContent = arrow;
                 document.getElementById('bgTrend' + sfx).style.color = color;
@@ -3121,7 +3122,7 @@
             for (const sfx of ['', 'Timer']) {
                 const w = document.getElementById('bgWidget' + sfx);
                 if (!w) continue;
-                document.getElementById('bgValue' + sfx).textContent = '-- mg/dL';
+                document.getElementById('bgValue' + sfx).textContent = '--';
                 document.getElementById('bgTrend' + sfx).textContent = '';
                 document.getElementById('bgTime' + sfx).textContent = '조회 실패';
                 w.className = 'bg-widget';

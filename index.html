@@ -1186,8 +1186,8 @@
             background: var(--color-card-light);
             padding: 20px;
             width: 100%;
-            max-width: 500px;
-            flex-shrink: 0;
+            flex: 1;
+            min-width: 0;
             overflow-y: auto;
             overscroll-behavior-y: contain;
             display: none;
@@ -1229,7 +1229,6 @@
 
         /* 루틴 편집 폼이 좁으면 입력란이 잘리므로 루틴관리 패널은 더 넓게 */
         #manageTab {
-            max-width: 560px;
         }
 
         /* 편집 중 선택된 단계 — "단계 추가"가 이 앞에 삽입된다 */

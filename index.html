@@ -5194,16 +5194,21 @@
     function mapSaveState() {
         try {
             const beatChk = document.getElementById('mapBeatCheck');
+            const label   = document.getElementById('mapGpxLabel');
             localStorage.setItem('map_state', JSON.stringify({
-                speedKmh:     mapCurrentSpeedKmh,
-                incline:      mapCurrentIncline,
-                elapsedMs:    mapSimElapsedMs,
-                distM:        mapSimDistM,
-                running:      mapSimRunning,
-                savedAt:      mapSimRunning ? Date.now() : null,
+                speedKmh:      mapCurrentSpeedKmh,
+                incline:       mapCurrentIncline,
+                elapsedMs:     mapSimElapsedMs,
+                distM:         mapSimDistM,
+                running:       mapSimRunning,
+                savedAt:       mapSimRunning ? Date.now() : null,
                 syncWithMetro: mapSyncWithMetro,
-                beatEnabled:  beatChk ? beatChk.checked : false,
-                autoFollow:   mapAutoFollow
+                beatEnabled:   beatChk ? beatChk.checked : false,
+                autoFollow:    mapAutoFollow,
+                gpxCoords:     GPX_COORDS,
+                gpxCumul:      GPX_CUMUL,
+                gpxTotalM:     GPX_TOTAL_M,
+                gpxLabel:      label ? label.textContent : null
             }));
         } catch(e) {}
     }
@@ -5222,6 +5227,15 @@
                 const extraMs = Date.now() - s.savedAt;
                 mapSimElapsedMs += extraMs;
                 mapSimDistM = Math.min(GPX_TOTAL_M, mapSimDistM + extraMs / 1000 * mapCurrentSpeedKmh / 3.6);
+            }
+            // GPX 코스 복원 (커스텀 파일이 저장된 경우)
+            if (Array.isArray(s.gpxCoords) && s.gpxCoords.length >= 2 &&
+                typeof s.gpxTotalM === 'number') {
+                GPX_COORDS  = s.gpxCoords;
+                GPX_CUMUL   = s.gpxCumul;
+                GPX_TOTAL_M = s.gpxTotalM;
+                const label = document.getElementById('mapGpxLabel');
+                if (label && s.gpxLabel) label.textContent = s.gpxLabel;
             }
             // autoFollow 복원
             if (typeof s.autoFollow === 'boolean') {
@@ -5567,6 +5581,7 @@
             const label = document.getElementById('mapGpxLabel');
             if (label) label.textContent = file.name + ' (' + (totalM/1000).toFixed(2) + 'km)';
 
+            mapSaveState();
             input.value = '';
         };
         reader.readAsText(file, 'utf-8');

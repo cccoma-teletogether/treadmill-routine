@@ -3437,12 +3437,16 @@
         const el = document.getElementById('metroIntervalSettings');
         const willOpen = el.style.display === 'none';
         el.style.display = willOpen ? '' : 'none';
-        // wrapper가 스크롤 컨테이너이므로 wrapper를 스크롤 (scrollIntoView는 Android에서 터치스크롤을 깨뜨림)
-        const wrapper = document.querySelector('.wrapper');
         if (willOpen) {
-            setTimeout(() => { if (wrapper) wrapper.scrollTop = wrapper.scrollHeight; }, 50);
-        } else {
-            if (wrapper) wrapper.scrollTop = 0;
+            setTimeout(() => {
+                // 모바일 메트로놈: wrapper가 스크롤 컨테이너
+                // 데스크탑: #metronomeTab(.container)이 스크롤 컨테이너
+                const isMobileMetro = document.body.getAttribute('data-mobile-tab') === 'metronome';
+                const scroller = isMobileMetro
+                    ? document.querySelector('.wrapper')
+                    : document.getElementById('metronomeTab');
+                if (scroller) scroller.scrollTop = scroller.scrollHeight;
+            }, 50);
         }
     }
 

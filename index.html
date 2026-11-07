@@ -5190,9 +5190,11 @@
     const DEFAULT_GPX_CUMUL   = GPX_CUMUL;
     const DEFAULT_GPX_TOTAL_M = GPX_TOTAL_M;
 
-    let routeMapObj    = null;
-    let routePolyline  = null;
-    let routeMarkerPos = null;
+    let routeMapObj      = null;
+    let routePolyline    = null;
+    let routeMarkerPos   = null;
+    let routeMarkerStart = null;
+    let routeMarkerEnd   = null;
     let mapSimRunning  = false;
     let mapSimElapsedMs= 0;
     let mapSimDistM    = 0;
@@ -5214,6 +5216,12 @@
     function courseSaveList(list) {
         try { localStorage.setItem('map_courses', JSON.stringify(list)); } catch(e) {}
     }
+    function courseGetDefaultName() {
+        try { return localStorage.getItem('map_default_course') || ''; } catch(e) { return ''; }
+    }
+    function courseSetDefaultByName(name) {
+        try { localStorage.setItem('map_default_course', name); } catch(e) {}
+    }
 
     function mapToggleCoursePanel() {
         const panel = document.getElementById('mapCoursePanel');
@@ -5233,34 +5241,44 @@
         const container = document.getElementById('mapCourseList');
         if (!container) return;
         const list = courseGetList();
+        const defaultName = courseGetDefaultName();
         container.innerHTML = '';
         if (list.length === 0) {
             container.innerHTML = '<div style="font-size:0.82em;color:#aaa;padding:4px 0;">저장된 코스 없음</div>';
             return;
         }
         list.forEach(function(c, i) {
+            const isDefault = c.name === defaultName;
             const row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #f0f0f0;';
+            row.style.cssText = 'display:flex;align-items:center;gap:5px;padding:6px 0;border-bottom:1px solid #eef0f4;';
             const info = document.createElement('div');
             info.style.cssText = 'flex:1;min-width:0;';
             const nameEl = document.createElement('div');
-            nameEl.style.cssText = 'font-size:0.9em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-            nameEl.textContent = c.name;
+            nameEl.style.cssText = 'font-size:0.9em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (isDefault ? 'color:#1a5fa8;' : '');
+            nameEl.textContent = (isDefault ? '★ ' : '') + c.name;
             const distEl = document.createElement('div');
             distEl.style.cssText = 'font-size:0.75em;color:#888;';
             distEl.textContent = (c.totalM/1000).toFixed(2) + 'km';
             info.appendChild(nameEl);
             info.appendChild(distEl);
+            const btnStar = document.createElement('button');
+            btnStar.style.cssText = 'border:none;background:transparent;cursor:pointer;font-size:1.1em;padding:3px 4px;line-height:1;';
+            btnStar.title = isDefault ? '기본 코스 지정됨 (해제)' : '기본 코스로 지정';
+            btnStar.textContent = isDefault ? '★' : '☆';
+            btnStar.onclick = function() {
+                courseSetDefaultByName(isDefault ? '' : c.name);
+                courseRenderList();
+            };
             const btnLoad = document.createElement('button');
-            btnLoad.className = 'btn-reset-settings';
-            btnLoad.style.cssText = 'font-size:0.8em;padding:4px 8px;white-space:nowrap;';
+            btnLoad.style.cssText = 'border:1px solid #c8d4e8;background:#fff;border-radius:6px;cursor:pointer;font-size:0.8em;padding:3px 8px;white-space:nowrap;color:#1a5fa8;';
             btnLoad.textContent = '불러오기';
             btnLoad.onclick = function() { courseLoad(i); };
             const btnDel = document.createElement('button');
-            btnDel.style.cssText = 'border:none;background:transparent;cursor:pointer;color:#e74c3c;font-size:1.1em;padding:4px 6px;';
+            btnDel.style.cssText = 'border:none;background:transparent;cursor:pointer;color:#e74c3c;font-size:1.0em;padding:3px 5px;';
             btnDel.textContent = '🗑';
             btnDel.onclick = function() { courseDelete(i); };
             row.appendChild(info);
+            row.appendChild(btnStar);
             row.appendChild(btnLoad);
             row.appendChild(btnDel);
             container.appendChild(row);
@@ -5296,6 +5314,8 @@
         if (label) label.textContent = c.label || (c.name + ' (' + (c.totalM/1000).toFixed(2) + 'km)');
         if (routePolyline) {
             routePolyline.setLatLngs(GPX_COORDS);
+            if (routeMarkerStart) routeMarkerStart.setLatLng(GPX_COORDS[0]);
+            if (routeMarkerEnd)   routeMarkerEnd.setLatLng(GPX_COORDS[GPX_COORDS.length-1]);
             if (routeMapObj) routeMapObj.fitBounds(routePolyline.getBounds(), {padding:[20,20]});
         }
         mapReset();
@@ -5304,12 +5324,20 @@
 
     function courseDelete(idx) {
         const list = courseGetList();
+        const deleted = list[idx];
         list.splice(idx, 1);
         courseSaveList(list);
+        if (deleted && deleted.name === courseGetDefaultName()) courseSetDefaultByName('');
         courseRenderList();
     }
 
     function courseLoadDefault() {
+        const defaultName = courseGetDefaultName();
+        if (defaultName) {
+            const list = courseGetList();
+            const idx = list.findIndex(function(c) { return c.name === defaultName; });
+            if (idx >= 0) { courseLoad(idx); return; }
+        }
         GPX_COORDS  = DEFAULT_GPX_COORDS;
         GPX_CUMUL   = DEFAULT_GPX_CUMUL;
         GPX_TOTAL_M = DEFAULT_GPX_TOTAL_M;
@@ -5317,6 +5345,8 @@
         if (label) label.textContent = '기본 코스 (5.37km)';
         if (routePolyline) {
             routePolyline.setLatLngs(GPX_COORDS);
+            if (routeMarkerStart) routeMarkerStart.setLatLng(GPX_COORDS[0]);
+            if (routeMarkerEnd)   routeMarkerEnd.setLatLng(GPX_COORDS[GPX_COORDS.length-1]);
             if (routeMapObj) routeMapObj.fitBounds(routePolyline.getBounds(), {padding:[20,20]});
         }
         mapReset();
@@ -5348,7 +5378,22 @@
     function mapLoadState() {
         try {
             const raw = localStorage.getItem('map_state');
-            if (!raw) return;
+            if (!raw) {
+                // 저장된 세션 없음 → 지정 기본 코스 확인
+                const defName = courseGetDefaultName();
+                if (defName) {
+                    const list = courseGetList();
+                    const idx = list.findIndex(function(c) { return c.name === defName; });
+                    if (idx >= 0) {
+                        GPX_COORDS  = list[idx].coords;
+                        GPX_CUMUL   = list[idx].cumul;
+                        GPX_TOTAL_M = list[idx].totalM;
+                        const lbl = document.getElementById('mapGpxLabel');
+                        if (lbl) lbl.textContent = list[idx].label || list[idx].name + ' (' + (list[idx].totalM/1000).toFixed(2) + 'km)';
+                    }
+                }
+                return;
+            }
             const s = JSON.parse(raw);
             if (typeof s.speedKmh  === 'number') mapCurrentSpeedKmh = s.speedKmh;
             if (typeof s.incline   === 'number') mapCurrentIncline  = s.incline;
@@ -5612,7 +5657,7 @@
         mapSimDistM = 0;
         const pos = GPX_COORDS[0];
         if (routeMarkerPos) routeMarkerPos.setLatLng(pos);
-        if (mapAutoFollow && routeMapObj) routeMapObj.setView(pos, routeMapObj.getZoom());
+        if (routeMapObj) routeMapObj.panTo(pos, {animate: true, duration: 0.4});
         mapUpdateStats(0, 0);
         mapSaveState();
     }
@@ -5702,6 +5747,8 @@
 
             if (routePolyline && routeMapObj) {
                 routePolyline.setLatLngs(coords);
+                if (routeMarkerStart) routeMarkerStart.setLatLng(coords[0]);
+                if (routeMarkerEnd)   routeMarkerEnd.setLatLng(coords[coords.length-1]);
                 routeMapObj.fitBounds(routePolyline.getBounds(), {padding:[20,20]});
             }
 
@@ -5756,8 +5803,8 @@
             // 출발/도착 마커
             const mkStart = L.divIcon({html:'<div style="width:12px;height:12px;background:#2ecc71;border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',iconSize:[12,12],iconAnchor:[6,6]});
             const mkEnd   = L.divIcon({html:'<div style="width:12px;height:12px;background:#e74c3c;border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',iconSize:[12,12],iconAnchor:[6,6]});
-            L.marker(GPX_COORDS[0], {icon:mkStart}).bindTooltip('출발').addTo(routeMapObj);
-            L.marker(GPX_COORDS[GPX_COORDS.length-1], {icon:mkEnd}).bindTooltip('도착').addTo(routeMapObj);
+            routeMarkerStart = L.marker(GPX_COORDS[0], {icon:mkStart}).bindTooltip('출발').addTo(routeMapObj);
+            routeMarkerEnd   = L.marker(GPX_COORDS[GPX_COORDS.length-1], {icon:mkEnd}).bindTooltip('도착').addTo(routeMapObj);
 
             // 현재 위치 마커 (파란 pulse 점)
             const mkPos = L.divIcon({html:`<div style="width:16px;height:16px;border-radius:50%;background:#3498db;border:3px solid #fff;box-shadow:0 0 0 3px rgba(52,152,219,.4);animation:pulse 1.5s infinite"></div>`,iconSize:[16,16],iconAnchor:[8,8],className:''});

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'treadmill-routine-v4';
+const CACHE_NAME = 'treadmill-routine-v5';
 const APP_SHELL = [
     './',
     './index.html',

@@ -2200,20 +2200,6 @@
         </div>
 
         <div class="setting-group">
-            <label>🗺 코스 관리</label>
-            <div style="font-size:0.8em;color:#7f8c8d;margin-bottom:8px;">현재 코스: <span id="courseCurrentLabel" style="font-weight:600;color:#444;">기본 코스 (5.37km)</span></div>
-            <div id="courseList" style="margin-bottom:10px;"></div>
-            <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-                <input type="text" id="courseNameInput" placeholder="코스 이름 입력" maxlength="30"
-                    style="flex:1;padding:7px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.9em;box-sizing:border-box;">
-                <button class="btn-save-settings" onclick="courseSaveCurrent()" style="white-space:nowrap;">현재 코스 저장</button>
-            </div>
-            <div class="setting-actions">
-                <button class="btn-reset-settings" onclick="courseLoadDefault()">↺ 기본 코스로</button>
-            </div>
-        </div>
-
-        <div class="setting-group">
             <button class="changelog-toggle-btn" id="paceTableToggleBtn" onclick="togglePaceTableSection()">📏 속도·페이스 참고표 <span id="paceTableToggleIcon">▼</span></button>
             <div id="paceTableSection" style="display:none; margin-top:10px; overflow-x:auto;">
                 <p class="changelog-desc">러닝머신 속도(km/h)별 야외 페이스(분/km) 환산표입니다.</p>
@@ -2305,11 +2291,23 @@
                     <input type="checkbox" id="mapBeatCheck" onchange="mapToggleBeat()"> 🥁 비트
                 </label>
             </div>
-            <!-- GPX 파일 불러오기 -->
+            <!-- GPX 파일 불러오기 + 코스 관리 -->
             <div class="map-ctrl-row" style="justify-content:flex-start;gap:8px;padding:4px 2px;">
                 <input type="file" id="mapGpxInput" accept=".gpx" style="display:none" onchange="mapHandleGpxFile(this)">
                 <button class="btn-map" style="background:#5a4fcf;color:#fff;min-width:0;padding:0 14px;font-size:0.85em;" onclick="document.getElementById('mapGpxInput').click()">📂 GPX 불러오기</button>
-                <span id="mapGpxLabel" style="font-size:0.78em;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">기본 코스 (5.37km)</span>
+                <span id="mapGpxLabel" style="flex:1;font-size:0.78em;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">기본 코스 (5.37km)</span>
+                <button class="btn-map" style="min-width:0;padding:0 10px;font-size:0.85em;" onclick="mapToggleCoursePanel()">⚙️ 코스</button>
+            </div>
+            <!-- 코스 관리 패널 -->
+            <div id="mapCoursePanel" style="display:none;background:#f8f9fb;border:1px solid #dde3ec;border-radius:10px;padding:12px;margin-top:4px;">
+                <div style="font-size:0.8em;font-weight:700;color:#555;margin-bottom:8px;">🗺 코스 관리</div>
+                <div id="mapCourseList" style="margin-bottom:10px;"></div>
+                <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                    <input type="text" id="courseNameInput" placeholder="코스 이름" maxlength="30"
+                        style="flex:1;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.85em;box-sizing:border-box;">
+                    <button class="btn-map" style="min-width:0;padding:0 12px;font-size:0.82em;background:#1a5fa8;color:#fff;" onclick="courseSaveCurrent()">저장</button>
+                </div>
+                <button class="btn-map" style="min-width:0;width:100%;font-size:0.82em;" onclick="courseLoadDefault()">↺ 기본 코스로</button>
             </div>
             <!-- 통계 -->
             <div class="map-stat-row">
@@ -5217,6 +5215,14 @@
         try { localStorage.setItem('map_courses', JSON.stringify(list)); } catch(e) {}
     }
 
+    function mapToggleCoursePanel() {
+        const panel = document.getElementById('mapCoursePanel');
+        if (!panel) return;
+        const open = panel.style.display === 'none';
+        panel.style.display = open ? '' : 'none';
+        if (open) courseRenderList();
+    }
+
     function courseRenderCurrentInfo() {
         const el = document.getElementById('courseCurrentLabel');
         const label = document.getElementById('mapGpxLabel');
@@ -5224,7 +5230,7 @@
     }
 
     function courseRenderList() {
-        const container = document.getElementById('courseList');
+        const container = document.getElementById('mapCourseList');
         if (!container) return;
         const list = courseGetList();
         container.innerHTML = '';
@@ -5800,10 +5806,6 @@
                 if (!mapInited) initRouteMap();
                 else if (routeMapObj) routeMapObj.invalidateSize();
             }, 150);
-        }
-        if (name === 'settings') {
-            courseRenderList();
-            courseRenderCurrentInfo();
         }
     };
 

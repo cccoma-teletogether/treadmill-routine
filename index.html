@@ -5193,13 +5193,17 @@
 
     function mapSaveState() {
         try {
+            const beatChk = document.getElementById('mapBeatCheck');
             localStorage.setItem('map_state', JSON.stringify({
-                speedKmh:  mapCurrentSpeedKmh,
-                incline:   mapCurrentIncline,
-                elapsedMs: mapSimElapsedMs,
-                distM:     mapSimDistM,
-                running:   mapSimRunning,
-                savedAt:   mapSimRunning ? Date.now() : null
+                speedKmh:     mapCurrentSpeedKmh,
+                incline:      mapCurrentIncline,
+                elapsedMs:    mapSimElapsedMs,
+                distM:        mapSimDistM,
+                running:      mapSimRunning,
+                savedAt:      mapSimRunning ? Date.now() : null,
+                syncWithMetro: mapSyncWithMetro,
+                beatEnabled:  beatChk ? beatChk.checked : false,
+                autoFollow:   mapAutoFollow
             }));
         } catch(e) {}
     }
@@ -5218,6 +5222,31 @@
                 const extraMs = Date.now() - s.savedAt;
                 mapSimElapsedMs += extraMs;
                 mapSimDistM = Math.min(GPX_TOTAL_M, mapSimDistM + extraMs / 1000 * mapCurrentSpeedKmh / 3.6);
+            }
+            // autoFollow 복원
+            if (typeof s.autoFollow === 'boolean') {
+                mapAutoFollow = s.autoFollow;
+                const btn = document.getElementById('btnMapFollow');
+                if (btn) {
+                    btn.textContent = mapAutoFollow ? '📍 따라가기' : '📍 고정해제';
+                    btn.className   = 'btn-map btn-map-follow' + (mapAutoFollow ? '' : ' off');
+                }
+            }
+            // 메트로놈 연동 복원
+            if (s.syncWithMetro) {
+                mapSyncWithMetro = true;
+                const chk = document.getElementById('mapSyncMetro');
+                if (chk) chk.checked = true;
+                mapOnSyncChange();
+            }
+            // 비트 복원 (연동 아닐 때만)
+            if (!mapSyncWithMetro && s.beatEnabled) {
+                const beatChk = document.getElementById('mapBeatCheck');
+                if (beatChk) {
+                    beatChk.checked = true;
+                    clearInterval(mapBeatInterval);
+                    mapBeatInterval = setInterval(mapPlayOneBeat, Math.round(METRO_BEAT_SEC * 1000));
+                }
             }
             mapRefreshSpeedDisplay();
             mapUpdateStats(mapSimElapsedMs / 1000, mapSimDistM);
@@ -5308,7 +5337,7 @@
             mapPlayOneBeat();
             mapBeatInterval = setInterval(mapPlayOneBeat, Math.round(METRO_BEAT_SEC * 1000));
         }
-        // 메트로놈 연동 중이면 비트 체크박스 숨김 (연동이 소리 담당)
+        mapSaveState();
     }
 
     function mapGetSpeedKmh() {
@@ -5447,6 +5476,7 @@
         const btn = document.getElementById('btnMapFollow');
         btn.textContent = mapAutoFollow ? '📍 따라가기' : '📍 고정해제';
         btn.className   = 'btn-map btn-map-follow' + (mapAutoFollow ? '' : ' off');
+        mapSaveState();
     }
 
     function mapOnSyncChange() {
@@ -5475,6 +5505,7 @@
             document.getElementById('btnMapPlay').textContent = '⏸ 일시정지';
             document.getElementById('btnMapPlay').className   = 'btn-map btn-map-pause';
         }
+        mapSaveState();
     }
 
     function mapHaversineM(a, b) {

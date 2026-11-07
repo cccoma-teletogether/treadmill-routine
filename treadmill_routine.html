@@ -2264,7 +2264,7 @@
             <div class="map-speed-row" style="background:#f0f6f0;">
                 <button class="map-adj-btn map-adj-step1" id="mapBtnIncDown" style="color:#2d7a2d;" onclick="mapSetInc(mapCurrentIncline-1.0)">−</button>
                 <div class="map-speed-center" style="border-color:#c8dfc8;">
-                    <div class="map-kmh-val" id="mapIncDisplay" style="color:#2d7a2d;font-size:1.8em;">0.0</div>
+                    <div class="map-kmh-val" id="mapIncDisplay" style="color:#2d7a2d;font-size:1.8em;">0</div>
                     <div class="map-speed-sub">% 경사도</div>
                 </div>
                 <button class="map-adj-btn map-adj-step1" id="mapBtnIncUp" style="color:#2d7a2d;" onclick="mapSetInc(mapCurrentIncline+1.0)">+</button>
@@ -5201,7 +5201,7 @@
         const iEl = document.getElementById('mapIncDisplay');
         if (kEl) kEl.textContent = kmh.toFixed(1);
         if (pEl) pEl.textContent = pm + ':' + String(ps).padStart(2, '0');
-        if (iEl) iEl.textContent = mapCurrentIncline.toFixed(1);
+        if (iEl) iEl.textContent = mapCurrentIncline.toFixed(0);
         // 활성 프리셋 표시
         document.querySelectorAll('#mapSpeedPresets .map-preset-btn').forEach(function(btn) {
             btn.classList.toggle('active', parseFloat(btn.textContent) === kmh);

@@ -1,3 +1,7 @@
+[TASK-114] 2026-11-07 리플래시 시 마지막 탭 복원
+- switchTab 호출 시 localStorage('last_tab')에 탭명 저장
+- 초기화 시 last_tab 읽어 복원, 없으면 타이머 탭으로 기본 시작
+
 [TASK-113] 2026-11-07 메트로놈 탭 전체 무음 체크박스 추가
 - 경과시간 안내 텍스트 오른쪽에 "🔇 무음" 체크박스 배치
 - globalMetroMuted 변수로 위상별 무음(metronomeMuted)과 독립적으로 동작

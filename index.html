@@ -2474,6 +2474,8 @@
 
         if (tabName === 'manage') loadRoutineList();
 
+        try { localStorage.setItem('last_tab', tabName); } catch(e) {}
+
         // 햄버거 메뉴 닫기 + 현재 탭명 업데이트
         closeMobileMenu();
         const TAB_NAMES = { timer: '타이머', routine: '루틴', settings: '⚙ 설정', manage: '📝 루틴관리', metronome: '🥁 메트로놈' };
@@ -4994,7 +4996,7 @@
     loadNightscoutSettings();
     loadBGRanges();
     restoreRunningState();
-    switchTab('timer');
+    try { switchTab(localStorage.getItem('last_tab') || 'timer'); } catch(e) { switchTab('timer'); }
     // 브라우저가 스크롤을 복원하더라도 다음 프레임에서 강제로 최상단으로 되돌린다
     requestAnimationFrame(() => {
         ['timerTab','routineTab','settingsTab','manageTab','changelogTab'].forEach(id => {

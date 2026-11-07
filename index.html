@@ -5189,6 +5189,48 @@
     let mapCurrentIncline  = 0.0;
     let mapAdjTimer = null;
     let mapAdjRepeat = null;
+    let mapSaveTick = 0;
+
+    function mapSaveState() {
+        try {
+            localStorage.setItem('map_state', JSON.stringify({
+                speedKmh:  mapCurrentSpeedKmh,
+                incline:   mapCurrentIncline,
+                elapsedMs: mapSimElapsedMs,
+                distM:     mapSimDistM,
+                running:   mapSimRunning,
+                savedAt:   mapSimRunning ? Date.now() : null
+            }));
+        } catch(e) {}
+    }
+
+    function mapLoadState() {
+        try {
+            const raw = localStorage.getItem('map_state');
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (typeof s.speedKmh  === 'number') mapCurrentSpeedKmh = s.speedKmh;
+            if (typeof s.incline   === 'number') mapCurrentIncline  = s.incline;
+            if (typeof s.elapsedMs === 'number') mapSimElapsedMs    = s.elapsedMs;
+            if (typeof s.distM     === 'number') mapSimDistM        = s.distM;
+            // 실행 중이었으면 중단된 시간만큼 경과 보정
+            if (s.running && s.savedAt) {
+                const extraMs = Date.now() - s.savedAt;
+                mapSimElapsedMs += extraMs;
+                mapSimDistM = Math.min(GPX_TOTAL_M, mapSimDistM + extraMs / 1000 * mapCurrentSpeedKmh / 3.6);
+            }
+            mapRefreshSpeedDisplay();
+            mapUpdateStats(mapSimElapsedMs / 1000, mapSimDistM);
+            if (s.running && mapSimDistM < GPX_TOTAL_M) {
+                if (!mapInited) initRouteMap();
+                mapSimRunning  = true;
+                mapSimLastTick = Date.now();
+                mapSimInterval = setInterval(mapTick, 1000);
+                const btn = document.getElementById('btnMapPlay');
+                if (btn) { btn.textContent = '⏸ 일시정지'; btn.className = 'btn-map btn-map-pause'; }
+            }
+        } catch(e) {}
+    }
 
     function mapRefreshSpeedDisplay() {
         const kmh = (mapSyncWithMetro && typeof intervalEnabled !== 'undefined' && intervalEnabled)
@@ -5214,11 +5256,13 @@
     function mapSetSpeed(kmh) {
         mapCurrentSpeedKmh = Math.round(Math.max(1.0, Math.min(25.0, kmh)) * 10) / 10;
         mapRefreshSpeedDisplay();
+        mapSaveState();
     }
 
     function mapSetInc(pct) {
         mapCurrentIncline = Math.round(Math.max(0, Math.min(15, pct)));
         mapRefreshSpeedDisplay();
+        mapSaveState();
     }
 
     function mapStartAdj(dir) {
@@ -5361,6 +5405,7 @@
         if (mapAutoFollow && routeMapObj) routeMapObj.panTo(pos, {animate: true, duration: 0.5});
         if (mapSyncWithMetro) mapRefreshSpeedDisplay();
         mapUpdateStats(mapSimElapsedMs / 1000, mapSimDistM);
+        if (++mapSaveTick % 5 === 0) mapSaveState();
         if (mapSimDistM >= GPX_TOTAL_M) {
             mapStopPlay();
             document.getElementById('mapStatProgress').textContent = '완주!';
@@ -5375,6 +5420,7 @@
         mapSimInterval = setInterval(mapTick, 1000);
         document.getElementById('btnMapPlay').textContent = '⏸ 일시정지';
         document.getElementById('btnMapPlay').className   = 'btn-map btn-map-pause';
+        mapSaveState();
     }
 
     function mapStopPlay() {
@@ -5382,6 +5428,7 @@
         clearInterval(mapSimInterval);
         document.getElementById('btnMapPlay').textContent = '▶ 시작';
         document.getElementById('btnMapPlay').className   = 'btn-map btn-map-start';
+        mapSaveState();
     }
 
     function mapReset() {
@@ -5392,6 +5439,7 @@
         if (routeMarkerPos) routeMarkerPos.setLatLng(pos);
         if (mapAutoFollow && routeMapObj) routeMapObj.setView(pos, routeMapObj.getZoom());
         mapUpdateStats(0, 0);
+        mapSaveState();
     }
 
     function mapToggleFollow() {
@@ -5536,6 +5584,12 @@
             // 현재 위치 마커 (파란 pulse 점)
             const mkPos = L.divIcon({html:`<div style="width:16px;height:16px;border-radius:50%;background:#3498db;border:3px solid #fff;box-shadow:0 0 0 3px rgba(52,152,219,.4);animation:pulse 1.5s infinite"></div>`,iconSize:[16,16],iconAnchor:[8,8],className:''});
             routeMarkerPos = L.marker(GPX_COORDS[0], {icon:mkPos, zIndexOffset:1000}).addTo(routeMapObj);
+            // 저장된 위치로 마커 복원
+            if (mapSimDistM > 0) {
+                const savedPos = mapInterpolate(mapSimDistM);
+                routeMarkerPos.setLatLng(savedPos);
+                routeMapObj.setView(savedPos, routeMapObj.getZoom());
+            }
 
             // pulse 애니메이션 CSS
             if (!document.getElementById('mapPulseCSS')) {
@@ -5550,6 +5604,11 @@
 
     // 보폭 ↔ 페이스 양방향 연동
     document.addEventListener('DOMContentLoaded', function() {
+        mapLoadState();
+        window.addEventListener('pagehide', mapSaveState);
+        window.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') mapSaveState();
+        });
         setTimeout(function() {
             const strideEl = document.getElementById('mapStride');
             const paceMinEl= document.getElementById('mapPaceMin');

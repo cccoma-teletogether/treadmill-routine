@@ -485,7 +485,7 @@
 - 저장소 `github.com/cccoma-teletogether/treadmill-routine`이 생성되었습니다.
 - GitHub CLI(gh)를 winget으로 설치하고 인증을 완료했습니다.
 - main 브랜치 루트 기준 GitHub Pages가 활성화되어 누구나 접속 가능합니다.
-- 배포 갱신은 `treadmill_routine.html`을 `index.html`로 복사 후 commit/push로 진행합니다.
+- 배포 갱신은 `index.html` 수정 후 commit/push로 진행합니다.
 
 [TASK-005] 2026-06-12 스마트폰 단독 실행 지원 (PWA 기본 설정)
 - 홈 화면에 추가하면 주소창 없는 전체화면 앱처럼 실행됩니다.

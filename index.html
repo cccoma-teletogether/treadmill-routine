@@ -2307,7 +2307,10 @@
                         style="flex:1;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:0.85em;box-sizing:border-box;">
                     <button class="btn-map" style="min-width:0;padding:0 12px;font-size:0.82em;background:#1a5fa8;color:#fff;" onclick="courseSaveCurrent()">저장</button>
                 </div>
-                <button class="btn-map" style="min-width:0;width:100%;font-size:0.82em;" onclick="courseLoadDefault()">↺ 기본 코스로</button>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn-map" style="min-width:0;flex:1;font-size:0.82em;" onclick="courseLoadDefault()">↺ 기본 코스로</button>
+                    <button class="btn-map" style="min-width:0;flex:1;font-size:0.82em;" onclick="courseReverse()" title="출발·도착 방향을 반전합니다">↔ 방향 반전</button>
+                </div>
             </div>
             <!-- 통계 -->
             <div class="map-stat-row">
@@ -5351,6 +5354,19 @@
         }
         mapReset();
         courseRenderCurrentInfo();
+    }
+
+    function courseReverse() {
+        GPX_COORDS = GPX_COORDS.slice().reverse();
+        const n = GPX_CUMUL.length;
+        GPX_CUMUL = GPX_CUMUL.map(function(_, i) { return GPX_TOTAL_M - GPX_CUMUL[n - 1 - i]; });
+        if (routePolyline) {
+            routePolyline.setLatLngs(GPX_COORDS);
+            if (routeMarkerStart) routeMarkerStart.setLatLng(GPX_COORDS[0]);
+            if (routeMarkerEnd)   routeMarkerEnd.setLatLng(GPX_COORDS[GPX_COORDS.length - 1]);
+            if (routeMapObj) routeMapObj.fitBounds(routePolyline.getBounds(), {padding:[20,20]});
+        }
+        mapReset();
     }
 
     function mapSaveState() {

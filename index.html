@@ -2300,36 +2300,35 @@
         </div>
         <!-- 전체화면 오버레이 컨트롤 -->
         <div id="mapFullOverlay">
+            <!-- 행1: 속도 / 경사도 조절 -->
             <div class="map-ov-row" style="margin-bottom:4px;">
-                <!-- 속도 조절 -->
                 <button class="map-ov-adj step" onclick="mapSetSpeed(mapCurrentSpeedKmh-1.0)">−1</button>
                 <button class="map-ov-adj" onclick="mapSetSpeed(mapCurrentSpeedKmh-0.1)">−</button>
-                <div style="display:flex;flex-direction:column;align-items:center;min-width:60px;">
+                <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
                     <span class="map-ov-val" id="mapOvKmh">8.2</span>
                     <span style="font-size:0.68em;color:#999;">km/h</span>
                 </div>
                 <button class="map-ov-adj" onclick="mapSetSpeed(mapCurrentSpeedKmh+0.1)">+</button>
                 <button class="map-ov-adj step" onclick="mapSetSpeed(mapCurrentSpeedKmh+1.0)">+1</button>
                 <div class="map-ov-sep"></div>
-                <!-- 경사도 조절 -->
                 <button class="map-ov-adj" style="color:#2d7a2d;background:#e8f5e8;" onclick="mapSetInc(mapCurrentIncline-1.0)">−</button>
-                <div style="display:flex;flex-direction:column;align-items:center;min-width:46px;">
+                <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
                     <span class="map-ov-val" id="mapOvInc" style="color:#2d7a2d;">0</span>
                     <span style="font-size:0.68em;color:#999;">% 경사</span>
                 </div>
                 <button class="map-ov-adj" style="color:#2d7a2d;background:#e8f5e8;" onclick="mapSetInc(mapCurrentIncline+1.0)">+</button>
-                <div class="map-ov-sep"></div>
-                <!-- 통계 -->
-                <span class="map-ov-stat" id="mapOvElapsed">00:00</span>
-                <span class="map-ov-stat" style="color:#ccc;">·</span>
-                <span class="map-ov-stat" id="mapOvDist">0.00km</span>
-                <button class="map-ov-exit" onclick="mapToggleFullscreen()">✕ 나가기</button>
             </div>
-            <div class="map-ov-row" style="gap:8px;">
-                <button class="btn-map btn-map-start" id="btnMapPlayOv" style="flex:1;" onclick="mapTogglePlay()">▶ 시작</button>
-                <button class="btn-map btn-map-reset" style="flex:0 0 auto;" onclick="mapReset()">↺</button>
-                <button class="btn-map btn-map-follow" id="btnMapFollowOv" style="flex:0 0 auto;" onclick="mapToggleFollow()">📍</button>
-                <span class="map-ov-stat" id="mapOvProgress" style="margin-left:4px;font-size:0.9em;font-weight:700;color:#1a5fa8;"></span>
+            <!-- 행2: 재생/리셋/따라가기 + 통계 + 나가기 -->
+            <div class="map-ov-row" style="gap:6px;">
+                <button class="btn-map btn-map-start" id="btnMapPlayOv" style="flex:1;min-width:0;" onclick="mapTogglePlay()">▶ 시작</button>
+                <button class="btn-map btn-map-reset" style="flex:0 0 auto;padding:9px 10px;" onclick="mapReset()">↺</button>
+                <button class="btn-map btn-map-follow" id="btnMapFollowOv" style="flex:0 0 auto;padding:9px 10px;" onclick="mapToggleFollow()">📍</button>
+                <div style="display:flex;flex-direction:column;align-items:center;font-size:0.75em;color:#555;font-variant-numeric:tabular-nums;line-height:1.3;flex:0 0 auto;">
+                    <span id="mapOvElapsed">00:00</span>
+                    <span id="mapOvDist" style="color:#1a5fa8;font-weight:700;">0.00km</span>
+                </div>
+                <span id="mapOvProgress" style="font-size:0.9em;font-weight:700;color:#1a5fa8;white-space:nowrap;flex:0 0 auto;"></span>
+                <button class="map-ov-exit" onclick="mapToggleFullscreen()">✕</button>
             </div>
         </div>
         <div class="map-ctrl-panel">

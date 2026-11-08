@@ -1939,6 +1939,57 @@
             .map-adj-btn { width: 40px; }
             .map-adj-step1 { width: 46px; }
         }
+        /* 지도 전체화면 모드 */
+        #mapTab.map-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 1200 !important;
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+        #mapTab.map-fullscreen #routeMapDiv {
+            flex: 1 !important;
+            height: auto !important;
+            min-height: 0 !important;
+        }
+        #mapTab.map-fullscreen .map-ctrl-panel { display: none !important; }
+        /* 전체화면 오버레이 컨트롤 바 */
+        #mapFullOverlay {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            background: rgba(255,255,255,0.97);
+            border-top: 1px solid #dde3ec;
+            padding: 6px 10px 8px;
+        }
+        #mapTab.map-fullscreen #mapFullOverlay { display: flex; }
+        .map-ov-row {
+            display: flex; align-items: center; gap: 6px;
+        }
+        .map-ov-val {
+            font-size: 1.3em; font-weight: 800; color: #1a5fa8;
+            font-variant-numeric: tabular-nums; min-width: 44px; text-align: center;
+        }
+        .map-ov-adj {
+            width: 36px; height: 36px; border: none; border-radius: 8px;
+            background: #e8f0fb; color: #1a5fa8; font-size: 1.2em; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; touch-action: none; user-select: none; -webkit-user-select: none;
+        }
+        .map-ov-adj:active { background: #c5d9f5; }
+        .map-ov-adj.step { font-size: 0.85em; font-weight: 900; color: #1a5fa8; }
+        .map-ov-sep { width: 1px; height: 32px; background: #dde3ec; flex-shrink: 0; }
+        .map-ov-stat { font-size: 0.82em; color: #555; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .map-ov-exit {
+            margin-left: auto; padding: 6px 12px; border: none; border-radius: 8px;
+            background: #e74c3c; color: #fff; font-size: 0.85em; font-weight: 700; cursor: pointer;
+        }
+        .map-ov-exit:active { background: #c0392b; }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 </head>
@@ -2234,7 +2285,48 @@
     <!-- changelogTab: 하위 호환 — settings 탭으로 리다이렉트됨 -->
     <div id="changelogTab" style="display:none"></div>
     <div class="container" id="mapTab">
-        <div id="routeMapDiv"></div>
+        <div id="routeMapDiv" style="position:relative;">
+            <button onclick="mapToggleFullscreen()" id="btnMapFullscreen"
+                style="position:absolute;top:8px;right:8px;z-index:10;background:rgba(255,255,255,0.9);
+                border:none;border-radius:8px;padding:6px 10px;font-size:0.9em;font-weight:700;
+                cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);line-height:1;">
+                ⛶ 전체화면
+            </button>
+        </div>
+        <!-- 전체화면 오버레이 컨트롤 -->
+        <div id="mapFullOverlay">
+            <div class="map-ov-row" style="margin-bottom:4px;">
+                <!-- 속도 조절 -->
+                <button class="map-ov-adj step" onclick="mapSetSpeed(mapCurrentSpeedKmh-1.0)">−1</button>
+                <button class="map-ov-adj" onclick="mapSetSpeed(mapCurrentSpeedKmh-0.1)">−</button>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:60px;">
+                    <span class="map-ov-val" id="mapOvKmh">8.2</span>
+                    <span style="font-size:0.68em;color:#999;">km/h</span>
+                </div>
+                <button class="map-ov-adj" onclick="mapSetSpeed(mapCurrentSpeedKmh+0.1)">+</button>
+                <button class="map-ov-adj step" onclick="mapSetSpeed(mapCurrentSpeedKmh+1.0)">+1</button>
+                <div class="map-ov-sep"></div>
+                <!-- 경사도 조절 -->
+                <button class="map-ov-adj" style="color:#2d7a2d;background:#e8f5e8;" onclick="mapSetInc(mapCurrentIncline-1.0)">−</button>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:46px;">
+                    <span class="map-ov-val" id="mapOvInc" style="color:#2d7a2d;">0</span>
+                    <span style="font-size:0.68em;color:#999;">% 경사</span>
+                </div>
+                <button class="map-ov-adj" style="color:#2d7a2d;background:#e8f5e8;" onclick="mapSetInc(mapCurrentIncline+1.0)">+</button>
+                <div class="map-ov-sep"></div>
+                <!-- 통계 -->
+                <span class="map-ov-stat" id="mapOvElapsed">00:00</span>
+                <span class="map-ov-stat" style="color:#ccc;">·</span>
+                <span class="map-ov-stat" id="mapOvDist">0.00km</span>
+                <button class="map-ov-exit" onclick="mapToggleFullscreen()">✕ 나가기</button>
+            </div>
+            <div class="map-ov-row" style="gap:8px;">
+                <button class="btn-map btn-map-start" id="btnMapPlayOv" style="flex:1;" onclick="mapTogglePlay()">▶ 시작</button>
+                <button class="btn-map btn-map-reset" style="flex:0 0 auto;" onclick="mapReset()">↺</button>
+                <button class="btn-map btn-map-follow" id="btnMapFollowOv" style="flex:0 0 auto;" onclick="mapToggleFollow()">📍</button>
+                <span class="map-ov-stat" id="mapOvProgress" style="margin-left:4px;font-size:0.9em;font-weight:700;color:#1a5fa8;"></span>
+            </div>
+        </div>
         <div class="map-ctrl-panel">
             <!-- 속도 조절 -->
             <div class="map-speed-row">
@@ -5357,6 +5449,42 @@
         courseRenderCurrentInfo();
     }
 
+    let mapIsFullscreen = false;
+    function mapToggleFullscreen() {
+        mapIsFullscreen = !mapIsFullscreen;
+        const tab = document.getElementById('mapTab');
+        const btn = document.getElementById('btnMapFullscreen');
+        tab.classList.toggle('map-fullscreen', mapIsFullscreen);
+        if (btn) btn.style.display = mapIsFullscreen ? 'none' : '';
+        // 지도 크기 재계산
+        if (routeMapObj) setTimeout(function() { routeMapObj.invalidateSize(); }, 50);
+    }
+    function mapUpdateFullOverlay() {
+        const ovKmh = document.getElementById('mapOvKmh');
+        const ovInc = document.getElementById('mapOvInc');
+        const ovElapsed = document.getElementById('mapOvElapsed');
+        const ovDist = document.getElementById('mapOvDist');
+        const ovProgress = document.getElementById('mapOvProgress');
+        const ovPlay = document.getElementById('btnMapPlayOv');
+        const ovFollow = document.getElementById('btnMapFollowOv');
+        if (ovKmh) ovKmh.textContent = mapCurrentSpeedKmh.toFixed(1);
+        if (ovInc) ovInc.textContent = mapCurrentIncline.toFixed(0);
+        const sec = Math.round(mapSimElapsedMs / 1000);
+        const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+        const ss = String(sec % 60).padStart(2, '0');
+        if (ovElapsed) ovElapsed.textContent = mm + ':' + ss;
+        if (ovDist) ovDist.textContent = (mapSimDistM / 1000).toFixed(2) + 'km';
+        const pct = GPX_TOTAL_M > 0 ? Math.round(mapSimDistM / GPX_TOTAL_M * 100) : 0;
+        if (ovProgress) ovProgress.textContent = pct + '%';
+        if (ovPlay) {
+            ovPlay.textContent = mapSimRunning ? '⏸ 정지' : '▶ 시작';
+            ovPlay.className = 'btn-map ' + (mapSimRunning ? 'btn-map-pause' : 'btn-map-start');
+        }
+        if (ovFollow) {
+            ovFollow.className = 'btn-map btn-map-follow' + (mapAutoFollow ? '' : ' off');
+        }
+    }
+
     function courseReverse() {
         GPX_COORDS = GPX_COORDS.slice().reverse();
         const n = GPX_CUMUL.length;
@@ -5488,6 +5616,7 @@
         document.querySelectorAll('#mapIncPresets .map-preset-btn').forEach(function(btn) {
             btn.classList.toggle('active', parseFloat(btn.textContent) === mapCurrentIncline);
         });
+        mapUpdateFullOverlay();
     }
 
     function mapSetSpeed(kmh) {
@@ -5586,6 +5715,7 @@
         document.getElementById('mapStatRemain').textContent   = (remain/1000).toFixed(2);
         document.getElementById('mapStatProgress').textContent = pct.toFixed(0) + '%';
         document.getElementById('mapStatPace').textContent     = paceSecPerKm > 0 ? mapFmtTime(paceSecPerKm) : '--:--';
+        mapUpdateFullOverlay();
     }
 
     function mapDistFromSchedule(t) {
@@ -5657,6 +5787,8 @@
         mapSimInterval = setInterval(mapTick, 1000);
         document.getElementById('btnMapPlay').textContent = '⏸ 일시정지';
         document.getElementById('btnMapPlay').className   = 'btn-map btn-map-pause';
+        const ov = document.getElementById('btnMapPlayOv');
+        if (ov) { ov.textContent = '⏸ 정지'; ov.className = 'btn-map btn-map-pause'; }
         mapSaveState();
     }
 
@@ -5665,6 +5797,8 @@
         clearInterval(mapSimInterval);
         document.getElementById('btnMapPlay').textContent = '▶ 시작';
         document.getElementById('btnMapPlay').className   = 'btn-map btn-map-start';
+        const ov = document.getElementById('btnMapPlayOv');
+        if (ov) { ov.textContent = '▶ 시작'; ov.className = 'btn-map btn-map-start'; }
         mapSaveState();
     }
 

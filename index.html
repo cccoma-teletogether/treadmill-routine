@@ -1953,8 +1953,12 @@
             overflow: hidden !important;
         }
         #mapTab.map-fullscreen #routeMapDiv {
+            height: 100% !important;
+        }
+        #mapTab.map-fullscreen #routeMapDiv + #btnMapFullscreen { display: none; }
+        /* routeMapDiv 래퍼가 전체화면에서 flex:1을 차지하도록 */
+        #mapTab.map-fullscreen > div:first-child {
             flex: 1 !important;
-            height: auto !important;
             min-height: 0 !important;
         }
         #mapTab.map-fullscreen .map-ctrl-panel { display: none !important; }
@@ -2285,11 +2289,12 @@
     <!-- changelogTab: 하위 호환 — settings 탭으로 리다이렉트됨 -->
     <div id="changelogTab" style="display:none"></div>
     <div class="container" id="mapTab">
-        <div id="routeMapDiv" style="position:relative;">
+        <div style="position:relative;flex-shrink:0;">
+            <div id="routeMapDiv"></div>
             <button onclick="mapToggleFullscreen()" id="btnMapFullscreen"
-                style="position:absolute;top:8px;right:8px;z-index:10;background:rgba(255,255,255,0.9);
+                style="position:absolute;top:8px;right:8px;z-index:1000;background:rgba(255,255,255,0.92);
                 border:none;border-radius:8px;padding:6px 10px;font-size:0.9em;font-weight:700;
-                cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2);line-height:1;">
+                cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.25);line-height:1;pointer-events:all;">
                 ⛶ 전체화면
             </button>
         </div>

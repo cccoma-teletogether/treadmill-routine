@@ -1875,7 +1875,7 @@
 
         /* ===== 지도 탭 ===== */
         #mapTab { padding: 0; }
-        #routeMapDiv { height: 300px; width: 100%; z-index: 0; transform-origin: center center; transition: transform 0.5s ease-out; }
+        #routeMapDiv { height: 300px; width: 100%; z-index: 0; }
         #mapClipWrap { overflow: hidden; }
         #btnMapCompass.heading-up { background: rgba(52,152,219,0.18) !important; }
         #btnMapCompassOv.heading-up { background: rgba(52,152,219,0.25) !important; }
@@ -5531,8 +5531,11 @@
 
     function mapApplyBearing(deg) {
         mapCurrentBearing = deg;
-        var mapDiv = document.getElementById('routeMapDiv');
-        if (mapDiv) mapDiv.style.transform = 'rotate(' + (-deg) + 'deg)';
+        // leaflet-rotate 플러그인으로 타일 포함 전체 회전
+        if (routeMapObj && routeMapObj.setBearing) {
+            routeMapObj.setBearing(deg);
+        }
+        // 나침반 SVG: 북쪽 방향 표시 (지도와 반대 방향)
         var rot = 'rotate(' + (-deg) + 'deg)';
         var svg = document.getElementById('mapCompassSVG');
         var svgOv = document.getElementById('mapCompassSVGOv');
@@ -5547,10 +5550,6 @@
         var label = document.getElementById('mapCompassLabel');
         if (!mapHeadingUp) {
             mapApplyBearing(0);
-            var svg = document.getElementById('mapCompassSVG');
-            var svgOv = document.getElementById('mapCompassSVGOv');
-            if (svg) svg.style.transform = 'rotate(0deg)';
-            if (svgOv) svgOv.style.transform = 'rotate(0deg)';
             if (label) label.textContent = '방향';
             if (btn) { btn.classList.remove('heading-up'); btn.title = '진행방향으로 자동회전'; }
             if (btnOv) btnOv.classList.remove('heading-up');
@@ -6032,10 +6031,8 @@
         if (mapInited) { routeMapObj && routeMapObj.invalidateSize(); return; }
         mapInited = true;
 
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-        script.onload = function() {
-            routeMapObj = L.map('routeMapDiv');
+        function _setupMap(withRotate) {
+            routeMapObj = L.map('routeMapDiv', withRotate ? { rotate: true, bearing: 0 } : {});
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                 maxZoom: 19
@@ -6068,6 +6065,17 @@
                 st.textContent = '@keyframes pulse{0%{box-shadow:0 0 0 3px rgba(52,152,219,.4)}70%{box-shadow:0 0 0 10px rgba(52,152,219,0)}100%{box-shadow:0 0 0 3px rgba(52,152,219,.4)}}';
                 document.head.appendChild(st);
             }
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+        script.onload = function() {
+            // leaflet-rotate: Leaflet이 회전된 뷰포트 기준으로 타일을 로드하도록 패치
+            const rotScript = document.createElement('script');
+            rotScript.src = 'https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js';
+            rotScript.onload  = function() { _setupMap(true); };
+            rotScript.onerror = function() { _setupMap(false); };
+            document.head.appendChild(rotScript);
         };
         document.head.appendChild(script);
     }

@@ -1879,6 +1879,8 @@
         #mapClipWrap { overflow: hidden; }
         #btnMapCompass.heading-up { background: rgba(52,152,219,0.18) !important; }
         #btnMapCompassOv.heading-up { background: rgba(52,152,219,0.25) !important; }
+        /* leaflet-rotate 내장 나침반 버튼 숨김 (우리 나침반 버튼으로 대체) */
+        .leaflet-control-rotate { display: none !important; }
         .map-ctrl-panel {
             padding: 8px 12px 10px; background: var(--card-bg, #fff);
             border-top: 1px solid var(--border-color, #e0e0e0);
@@ -1960,6 +1962,7 @@
         }
         #mapTab.map-fullscreen #mapClipWrap { height: 100% !important; }
         #mapTab.map-fullscreen #btnMapFullscreen { display: none; }
+        #mapTab.map-fullscreen #btnMapCompass { display: none; }
         /* routeMapDiv 래퍼가 전체화면에서 flex:1을 차지하도록 */
         #mapTab.map-fullscreen > div:first-child {
             flex: 1 !important;
@@ -5531,9 +5534,9 @@
 
     function mapApplyBearing(deg) {
         mapCurrentBearing = deg;
-        // leaflet-rotate 플러그인으로 타일 포함 전체 회전
+        // leaflet-rotate: setBearing은 CW 회전량 → 진행방향이 위로 오려면 (360-bearing)
         if (routeMapObj && routeMapObj.setBearing) {
-            routeMapObj.setBearing(deg);
+            routeMapObj.setBearing((360 - deg % 360) % 360);
         }
         // 나침반 SVG: 북쪽 방향 표시 (지도와 반대 방향)
         var rot = 'rotate(' + (-deg) + 'deg)';

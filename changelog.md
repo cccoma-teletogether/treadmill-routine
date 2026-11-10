@@ -1,3 +1,12 @@
+[TASK-115] 2026-11-10 지도 진행방향 자동회전 (내비게이션 모드)
+- routeMapDiv를 overflow:hidden 래퍼(mapClipWrap)로 감싸 회전 시 가장자리 클리핑
+- 나침반 버튼(↑방향) 추가: 지도 오른쪽 위 + 전체화면 오버레이 Row 2
+- mapCalcBearing(): Haversine 공식으로 두 좌표 간 방위각 계산
+- mapApplyBearing(): routeMapDiv에 CSS rotate 적용, 나침반 화살표 역회전(북쪽 방향 표시)
+- mapToggleHeadingUp(): 진행방향 자동회전 ↔ 북쪽 고정 토글
+- mapTick()에서 80m 전방 기준으로 매 틱 bearing 계산 → 2° 이상 변화 시 지도 회전
+- 버튼 활성화 시 파란색 강조 표시
+
 [TASK-114] 2026-11-07 리플래시 시 마지막 탭 복원
 - switchTab 호출 시 localStorage('last_tab')에 탭명 저장
 - 초기화 시 last_tab 읽어 복원, 없으면 타이머 탭으로 기본 시작

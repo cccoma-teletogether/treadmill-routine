@@ -1877,7 +1877,6 @@
         #mapTab { padding: 0; }
         #routeMapDiv { height: 300px; width: 100%; z-index: 0; }
         #mapClipWrap { overflow: hidden; }
-        #btnMapCompass.heading-up { background: rgba(52,152,219,0.18) !important; }
         #btnMapCompassOv.heading-up { background: rgba(52,152,219,0.25) !important; }
         /* leaflet-rotate 내장 나침반 버튼 숨김 (우리 나침반 버튼으로 대체) */
         .leaflet-control-rotate { display: none !important; }
@@ -1962,7 +1961,6 @@
         }
         #mapTab.map-fullscreen #mapClipWrap { height: 100% !important; }
         #mapTab.map-fullscreen #btnMapFullscreen { display: none; }
-        #mapTab.map-fullscreen #btnMapCompass { display: none; }
         /* routeMapDiv 래퍼가 전체화면에서 flex:1을 차지하도록 */
         #mapTab.map-fullscreen > div:first-child {
             flex: 1 !important;
@@ -2305,20 +2303,6 @@
                 border:none;border-radius:8px;padding:6px 10px;font-size:0.9em;font-weight:700;
                 cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.25);line-height:1;pointer-events:all;">
                 ⛶ 전체화면
-            </button>
-            <button onclick="mapToggleHeadingUp()" id="btnMapCompass"
-                style="position:absolute;top:44px;right:8px;z-index:1000;background:rgba(255,255,255,0.92);
-                border:none;border-radius:8px;padding:5px 8px;font-size:0.85em;font-weight:700;
-                cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.25);line-height:1;pointer-events:all;
-                display:flex;align-items:center;gap:3px;" title="진행방향으로 자동회전">
-                <svg id="mapCompassSVG" viewBox="0 0 32 32" width="22" height="22"
-                    style="display:block;transition:transform 0.5s ease-out;flex-shrink:0;">
-                  <circle cx="16" cy="16" r="15" fill="white" stroke="#bbb" stroke-width="1.5"/>
-                  <polygon points="16,4 13,16 19,16" fill="#e74c3c"/>
-                  <polygon points="16,28 13,16 19,16" fill="#9e9e9e"/>
-                  <circle cx="16" cy="16" r="2.5" fill="white" stroke="#555" stroke-width="1.2"/>
-                </svg>
-                <span id="mapCompassLabel">방향</span>
             </button>
         </div>
         <!-- 전체화면 오버레이 컨트롤 -->
@@ -5871,6 +5855,10 @@
         if (++mapSaveTick % 5 === 0) mapSaveState();
         if (mapSimDistM >= GPX_TOTAL_M) {
             mapStopPlay();
+            clearInterval(mapBeatInterval);
+            mapBeatInterval = null;
+            var beatChk = document.getElementById('mapBeatCheck');
+            if (beatChk) beatChk.checked = false;
             document.getElementById('mapStatProgress').textContent = '완주!';
         }
     }

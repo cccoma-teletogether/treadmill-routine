@@ -2308,7 +2308,13 @@
                 border:none;border-radius:8px;padding:5px 8px;font-size:0.85em;font-weight:700;
                 cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.25);line-height:1;pointer-events:all;
                 display:flex;align-items:center;gap:3px;" title="진행방향으로 자동회전">
-                <span id="mapCompassArrow" style="display:inline-block;transition:transform 0.5s ease-out;">↑</span>
+                <svg id="mapCompassSVG" viewBox="0 0 32 32" width="22" height="22"
+                    style="display:block;transition:transform 0.5s ease-out;flex-shrink:0;">
+                  <circle cx="16" cy="16" r="15" fill="white" stroke="#bbb" stroke-width="1.5"/>
+                  <polygon points="16,4 13,16 19,16" fill="#e74c3c"/>
+                  <polygon points="16,28 13,16 19,16" fill="#9e9e9e"/>
+                  <circle cx="16" cy="16" r="2.5" fill="white" stroke="#555" stroke-width="1.2"/>
+                </svg>
                 <span id="mapCompassLabel">방향</span>
             </button>
         </div>
@@ -2338,7 +2344,13 @@
                 <button class="btn-map btn-map-reset" style="flex:0 0 auto;padding:9px 10px;" onclick="mapReset()">↺</button>
                 <button class="btn-map btn-map-follow" id="btnMapFollowOv" style="flex:0 0 auto;padding:9px 10px;" onclick="mapToggleFollow()">📍</button>
                 <button class="btn-map btn-map-follow" id="btnMapCompassOv" style="flex:0 0 auto;padding:9px 10px;" onclick="mapToggleHeadingUp()" title="진행방향으로 자동회전">
-                    <span id="mapCompassArrowOv" style="display:inline-block;transition:transform 0.5s ease-out;">↑</span>
+                    <svg id="mapCompassSVGOv" viewBox="0 0 32 32" width="22" height="22"
+                        style="display:block;transition:transform 0.5s ease-out;">
+                      <circle cx="16" cy="16" r="15" fill="white" stroke="#bbb" stroke-width="1.5"/>
+                      <polygon points="16,4 13,16 19,16" fill="#e74c3c"/>
+                      <polygon points="16,28 13,16 19,16" fill="#9e9e9e"/>
+                      <circle cx="16" cy="16" r="2.5" fill="white" stroke="#555" stroke-width="1.2"/>
+                    </svg>
                 </button>
                 <div style="display:flex;flex-direction:column;align-items:center;font-size:0.75em;color:#555;font-variant-numeric:tabular-nums;line-height:1.3;flex:0 0 auto;">
                     <span id="mapOvElapsed">00:00</span>
@@ -5522,10 +5534,10 @@
         var mapDiv = document.getElementById('routeMapDiv');
         if (mapDiv) mapDiv.style.transform = 'rotate(' + (-deg) + 'deg)';
         var rot = 'rotate(' + (-deg) + 'deg)';
-        var arrow = document.getElementById('mapCompassArrow');
-        var arrowOv = document.getElementById('mapCompassArrowOv');
-        if (arrow) arrow.style.transform = rot;
-        if (arrowOv) arrowOv.style.transform = rot;
+        var svg = document.getElementById('mapCompassSVG');
+        var svgOv = document.getElementById('mapCompassSVGOv');
+        if (svg) svg.style.transform = rot;
+        if (svgOv) svgOv.style.transform = rot;
     }
 
     function mapToggleHeadingUp() {
@@ -5535,10 +5547,10 @@
         var label = document.getElementById('mapCompassLabel');
         if (!mapHeadingUp) {
             mapApplyBearing(0);
-            var arrow = document.getElementById('mapCompassArrow');
-            var arrowOv = document.getElementById('mapCompassArrowOv');
-            if (arrow) arrow.style.transform = '';
-            if (arrowOv) arrowOv.style.transform = '';
+            var svg = document.getElementById('mapCompassSVG');
+            var svgOv = document.getElementById('mapCompassSVGOv');
+            if (svg) svg.style.transform = 'rotate(0deg)';
+            if (svgOv) svgOv.style.transform = 'rotate(0deg)';
             if (label) label.textContent = '방향';
             if (btn) { btn.classList.remove('heading-up'); btn.title = '진행방향으로 자동회전'; }
             if (btnOv) btnOv.classList.remove('heading-up');

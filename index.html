@@ -1875,7 +1875,10 @@
 
         /* ===== 지도 탭 ===== */
         #mapTab { padding: 0; }
-        #routeMapDiv { height: 300px; width: 100%; z-index: 0; }
+        #routeMapDiv { height: 300px; width: 100%; z-index: 0; transform-origin: center center; transition: transform 0.5s ease-out; }
+        #mapClipWrap { overflow: hidden; }
+        #btnMapCompass.heading-up { background: rgba(52,152,219,0.18) !important; }
+        #btnMapCompassOv.heading-up { background: rgba(52,152,219,0.25) !important; }
         .map-ctrl-panel {
             padding: 8px 12px 10px; background: var(--card-bg, #fff);
             border-top: 1px solid var(--border-color, #e0e0e0);
@@ -1955,7 +1958,8 @@
         #mapTab.map-fullscreen #routeMapDiv {
             height: 100% !important;
         }
-        #mapTab.map-fullscreen #routeMapDiv + #btnMapFullscreen { display: none; }
+        #mapTab.map-fullscreen #mapClipWrap { height: 100% !important; }
+        #mapTab.map-fullscreen #btnMapFullscreen { display: none; }
         /* routeMapDiv 래퍼가 전체화면에서 flex:1을 차지하도록 */
         #mapTab.map-fullscreen > div:first-child {
             flex: 1 !important;
@@ -2290,12 +2294,22 @@
     <div id="changelogTab" style="display:none"></div>
     <div class="container" id="mapTab">
         <div style="position:relative;flex-shrink:0;">
-            <div id="routeMapDiv"></div>
+            <div id="mapClipWrap">
+                <div id="routeMapDiv"></div>
+            </div>
             <button onclick="mapToggleFullscreen()" id="btnMapFullscreen"
                 style="position:absolute;top:8px;right:8px;z-index:1000;background:rgba(255,255,255,0.92);
                 border:none;border-radius:8px;padding:6px 10px;font-size:0.9em;font-weight:700;
                 cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.25);line-height:1;pointer-events:all;">
                 ⛶ 전체화면
+            </button>
+            <button onclick="mapToggleHeadingUp()" id="btnMapCompass"
+                style="position:absolute;top:44px;right:8px;z-index:1000;background:rgba(255,255,255,0.92);
+                border:none;border-radius:8px;padding:5px 8px;font-size:0.85em;font-weight:700;
+                cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.25);line-height:1;pointer-events:all;
+                display:flex;align-items:center;gap:3px;" title="진행방향으로 자동회전">
+                <span id="mapCompassArrow" style="display:inline-block;transition:transform 0.5s ease-out;">↑</span>
+                <span id="mapCompassLabel">방향</span>
             </button>
         </div>
         <!-- 전체화면 오버레이 컨트롤 -->
@@ -2323,6 +2337,9 @@
                 <button class="btn-map btn-map-start" id="btnMapPlayOv" style="flex:1;min-width:0;" onclick="mapTogglePlay()">▶ 시작</button>
                 <button class="btn-map btn-map-reset" style="flex:0 0 auto;padding:9px 10px;" onclick="mapReset()">↺</button>
                 <button class="btn-map btn-map-follow" id="btnMapFollowOv" style="flex:0 0 auto;padding:9px 10px;" onclick="mapToggleFollow()">📍</button>
+                <button class="btn-map btn-map-follow" id="btnMapCompassOv" style="flex:0 0 auto;padding:9px 10px;" onclick="mapToggleHeadingUp()" title="진행방향으로 자동회전">
+                    <span id="mapCompassArrowOv" style="display:inline-block;transition:transform 0.5s ease-out;">↑</span>
+                </button>
                 <div style="display:flex;flex-direction:column;align-items:center;font-size:0.75em;color:#555;font-variant-numeric:tabular-nums;line-height:1.3;flex:0 0 auto;">
                     <span id="mapOvElapsed">00:00</span>
                     <span id="mapOvDist" style="color:#1a5fa8;font-weight:700;">0.00km</span>
@@ -5454,6 +5471,8 @@
     }
 
     let mapIsFullscreen = false;
+    let mapHeadingUp = false;
+    let mapCurrentBearing = 0;
     function mapToggleFullscreen() {
         mapIsFullscreen = !mapIsFullscreen;
         const tab = document.getElementById('mapTab');
@@ -5486,6 +5505,55 @@
         }
         if (ovFollow) {
             ovFollow.className = 'btn-map btn-map-follow' + (mapAutoFollow ? '' : ' off');
+        }
+    }
+
+    function mapCalcBearing(from, to) {
+        var lat1 = from[0] * Math.PI / 180;
+        var lat2 = to[0] * Math.PI / 180;
+        var dLon = (to[1] - from[1]) * Math.PI / 180;
+        var y = Math.sin(dLon) * Math.cos(lat2);
+        var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
+
+    function mapApplyBearing(deg) {
+        mapCurrentBearing = deg;
+        var mapDiv = document.getElementById('routeMapDiv');
+        if (mapDiv) mapDiv.style.transform = 'rotate(' + (-deg) + 'deg)';
+        var rot = 'rotate(' + (-deg) + 'deg)';
+        var arrow = document.getElementById('mapCompassArrow');
+        var arrowOv = document.getElementById('mapCompassArrowOv');
+        if (arrow) arrow.style.transform = rot;
+        if (arrowOv) arrowOv.style.transform = rot;
+    }
+
+    function mapToggleHeadingUp() {
+        mapHeadingUp = !mapHeadingUp;
+        var btn = document.getElementById('btnMapCompass');
+        var btnOv = document.getElementById('btnMapCompassOv');
+        var label = document.getElementById('mapCompassLabel');
+        if (!mapHeadingUp) {
+            mapApplyBearing(0);
+            var arrow = document.getElementById('mapCompassArrow');
+            var arrowOv = document.getElementById('mapCompassArrowOv');
+            if (arrow) arrow.style.transform = '';
+            if (arrowOv) arrowOv.style.transform = '';
+            if (label) label.textContent = '방향';
+            if (btn) { btn.classList.remove('heading-up'); btn.title = '진행방향으로 자동회전'; }
+            if (btnOv) btnOv.classList.remove('heading-up');
+        } else {
+            if (label) label.textContent = '북↑';
+            if (btn) { btn.classList.add('heading-up'); btn.title = '북쪽 방향으로 전환'; }
+            if (btnOv) btnOv.classList.add('heading-up');
+            if (mapSimDistM > 0 && GPX_TOTAL_M > 0) {
+                var lookM = Math.min(mapSimDistM + 80, GPX_TOTAL_M);
+                if (lookM - mapSimDistM > 5) {
+                    var from = mapInterpolate(mapSimDistM);
+                    var to = mapInterpolate(lookM);
+                    mapApplyBearing(mapCalcBearing(from, to));
+                }
+            }
         }
     }
 
@@ -5774,6 +5842,16 @@
         const pos = mapInterpolate(mapSimDistM);
         if (routeMarkerPos) routeMarkerPos.setLatLng(pos);
         if (mapAutoFollow && routeMapObj) routeMapObj.panTo(pos, {animate: true, duration: 0.5});
+        if (mapHeadingUp && routeMapObj) {
+            var lookM = Math.min(mapSimDistM + 80, GPX_TOTAL_M);
+            if (lookM - mapSimDistM > 5) {
+                var nextPos = mapInterpolate(lookM);
+                var newBrg = mapCalcBearing(pos, nextPos);
+                var diff = Math.abs(newBrg - mapCurrentBearing);
+                if (diff > 180) diff = 360 - diff;
+                if (diff > 2) mapApplyBearing(newBrg);
+            }
+        }
         if (mapSyncWithMetro) mapRefreshSpeedDisplay();
         mapUpdateStats(mapSimElapsedMs / 1000, mapSimDistM);
         if (++mapSaveTick % 5 === 0) mapSaveState();

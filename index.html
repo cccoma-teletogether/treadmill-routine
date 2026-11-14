@@ -2344,6 +2344,10 @@
                     <span id="mapOvDist" style="color:#1a5fa8;font-weight:700;">0.00km</span>
                 </div>
                 <span id="mapOvProgress" style="font-size:0.9em;font-weight:700;color:#1a5fa8;white-space:nowrap;flex:0 0 auto;"></span>
+                <div id="bgWidgetMapOv" style="display:none;flex-shrink:0;text-align:center;line-height:1.2;">
+                    <span class="bg-num" id="bgValueMapOv" style="font-size:0.9em;font-weight:700;">--</span><span style="font-size:0.65em;color:#888;"> mg/dL</span>
+                    <span id="bgTrendMapOv" style="font-size:0.85em;"></span>
+                </div>
                 <button class="map-ov-exit" onclick="mapToggleFullscreen()">✕</button>
             </div>
         </div>
@@ -2396,9 +2400,19 @@
                 <label style="font-size:0.82em;display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none;">
                     <input type="checkbox" id="mapSyncMetro" onchange="mapOnSyncChange()"> 메트로놈 연동
                 </label>
-                <label style="font-size:0.82em;display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none;" id="mapBeatLabel">
+                <label style="font-size:0.82em;display:flex;align-items:center;gap:3px;cursor:pointer;user-select:none;" id="mapBeatLabel">
                     <input type="checkbox" id="mapBeatCheck" onchange="mapToggleBeat()"> 🥁 비트
+                    <button onclick="event.preventDefault();mapChangeBeatBPM(-5)" style="font-size:0.8em;border:1px solid #ccc;border-radius:4px;padding:0 4px;background:#f4f4f4;cursor:pointer;line-height:1.6;">−</button>
+                    <span id="mapBeatBpmLabel" style="min-width:52px;text-align:center;font-weight:700;color:#555;">180 BPM</span>
+                    <button onclick="event.preventDefault();mapChangeBeatBPM(+5)" style="font-size:0.8em;border:1px solid #ccc;border-radius:4px;padding:0 4px;background:#f4f4f4;cursor:pointer;line-height:1.6;">+</button>
                 </label>
+            </div>
+            <!-- 시작 위치 슬라이더 -->
+            <div class="map-ctrl-row" style="align-items:center;gap:6px;padding:2px 0;">
+                <span style="font-size:0.78em;color:#666;white-space:nowrap;flex-shrink:0;">시작위치</span>
+                <input type="range" id="mapStartSlider" min="0" max="100" value="0" step="1"
+                    style="flex:1;accent-color:#1a5fa8;" oninput="mapSetStartPos(+this.value)">
+                <span id="mapStartPosLabel" style="font-size:0.78em;color:#1a5fa8;min-width:34px;text-align:right;font-weight:700;">0%</span>
             </div>
             <!-- GPX 파일 불러오기 + 코스 관리 -->
             <div class="map-ctrl-row" style="justify-content:flex-start;gap:8px;padding:4px 2px;">
@@ -3347,7 +3361,7 @@
         const val = parseInt(document.getElementById('bgValue')?.textContent);
         if (!isNaN(val)) {
             const c = getBGColor(val);
-            for (const sfx of ['', 'Timer']) {
+            for (const sfx of ['', 'Timer', 'MapOv']) {
                 const v = document.getElementById('bgValue' + sfx);
                 const t = document.getElementById('bgTrend' + sfx);
                 if (v) v.style.color = c;
@@ -3417,6 +3431,15 @@
                 document.getElementById('bgTime' + sfx).textContent = ageStr;
                 w.className = 'bg-widget';
                 w.style.display = '';
+            }
+            // 전체화면 오버레이 혈당 업데이트
+            var wOv = document.getElementById('bgWidgetMapOv');
+            if (wOv) {
+                document.getElementById('bgValueMapOv').textContent = String(sgv);
+                document.getElementById('bgValueMapOv').style.color = color;
+                document.getElementById('bgTrendMapOv').textContent = arrow;
+                document.getElementById('bgTrendMapOv').style.color = color;
+                wOv.style.display = '';
             }
         } catch(e) {
             for (const sfx of ['', 'Timer']) {
@@ -5581,6 +5604,7 @@
                 savedAt:       mapSimRunning ? Date.now() : null,
                 syncWithMetro: mapSyncWithMetro,
                 beatEnabled:   beatChk ? beatChk.checked : false,
+                beatBPM:       mapBeatBPM,
                 autoFollow:    mapAutoFollow,
                 gpxCoords:     GPX_COORDS,
                 gpxCumul:      GPX_CUMUL,
@@ -5645,13 +5669,19 @@
                 if (chk) chk.checked = true;
                 mapOnSyncChange();
             }
+            // 비트 BPM 복원
+            if (typeof s.beatBPM === 'number' && s.beatBPM >= 100 && s.beatBPM <= 220) {
+                mapBeatBPM = s.beatBPM;
+                var bpmLbl = document.getElementById('mapBeatBpmLabel');
+                if (bpmLbl) bpmLbl.textContent = mapBeatBPM + ' BPM';
+            }
             // 비트 복원 (연동 아닐 때만)
             if (!mapSyncWithMetro && s.beatEnabled) {
                 const beatChk = document.getElementById('mapBeatCheck');
                 if (beatChk) {
                     beatChk.checked = true;
                     clearInterval(mapBeatInterval);
-                    mapBeatInterval = setInterval(mapPlayOneBeat, Math.round(METRO_BEAT_SEC * 1000));
+                    mapBeatInterval = setInterval(mapPlayOneBeat, Math.round(60000 / mapBeatBPM));
                 }
             }
             mapRefreshSpeedDisplay();
@@ -5721,6 +5751,7 @@
     }
 
     let mapBeatInterval = null;
+    let mapBeatBPM = 180;
 
     function mapPlayOneBeat() {
         if (typeof ensureAudioCtx === 'function') ensureAudioCtx();
@@ -5742,7 +5773,18 @@
         mapBeatInterval = null;
         if (checked) {
             mapPlayOneBeat();
-            mapBeatInterval = setInterval(mapPlayOneBeat, Math.round(METRO_BEAT_SEC * 1000));
+            mapBeatInterval = setInterval(mapPlayOneBeat, Math.round(60000 / mapBeatBPM));
+        }
+        mapSaveState();
+    }
+
+    function mapChangeBeatBPM(delta) {
+        mapBeatBPM = Math.max(100, Math.min(220, mapBeatBPM + delta));
+        var el = document.getElementById('mapBeatBpmLabel');
+        if (el) el.textContent = mapBeatBPM + ' BPM';
+        if (mapBeatInterval) {
+            clearInterval(mapBeatInterval);
+            mapBeatInterval = setInterval(mapPlayOneBeat, Math.round(60000 / mapBeatBPM));
         }
         mapSaveState();
     }
@@ -5860,6 +5902,7 @@
             var beatChk = document.getElementById('mapBeatCheck');
             if (beatChk) beatChk.checked = false;
             document.getElementById('mapStatProgress').textContent = '완주!';
+            setTimeout(function() { mapReset(); }, 2000);
         }
     }
 
@@ -5890,10 +5933,31 @@
         mapStopPlay();
         mapSimElapsedMs = 0;
         mapSimDistM = 0;
+        var slider = document.getElementById('mapStartSlider');
+        if (slider) slider.value = 0;
+        var sLbl = document.getElementById('mapStartPosLabel');
+        if (sLbl) sLbl.textContent = '0%';
         const pos = GPX_COORDS[0];
         if (routeMarkerPos) routeMarkerPos.setLatLng(pos);
         if (routeMapObj) routeMapObj.panTo(pos, {animate: true, duration: 0.4});
         mapUpdateStats(0, 0);
+        mapSaveState();
+    }
+
+    function mapSetStartPos(pct) {
+        if (mapSimRunning) {
+            var slider = document.getElementById('mapStartSlider');
+            if (slider) slider.value = Math.round(mapSimDistM / GPX_TOTAL_M * 100);
+            return;
+        }
+        mapSimDistM = Math.round((pct / 100) * GPX_TOTAL_M);
+        mapSimElapsedMs = 0;
+        var pos = mapInterpolate(mapSimDistM);
+        if (routeMarkerPos) routeMarkerPos.setLatLng(pos);
+        if (routeMapObj && mapAutoFollow) routeMapObj.panTo(pos, {animate: true, duration: 0.3});
+        var el = document.getElementById('mapStartPosLabel');
+        if (el) el.textContent = pct + '%';
+        mapUpdateStats(0, mapSimDistM);
         mapSaveState();
     }
 

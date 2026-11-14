@@ -2326,8 +2326,8 @@
                 <button class="map-ov-adj" style="color:#2d7a2d;background:#e8f5e8;" onclick="mapSetInc(mapCurrentIncline+1.0)">+</button>
             </div>
             <!-- 행2: 재생/리셋/따라가기 + 통계 + 나가기 -->
-            <div class="map-ov-row" style="gap:6px;">
-                <button class="btn-map btn-map-start" id="btnMapPlayOv" style="flex:1;min-width:0;" onclick="mapTogglePlay()">▶ 시작</button>
+            <div class="map-ov-row" style="gap:4px;">
+                <button class="btn-map btn-map-start" id="btnMapPlayOv" style="flex:1;min-width:0;white-space:nowrap;" onclick="mapTogglePlay()">▶ 시작</button>
                 <button class="btn-map btn-map-reset" style="flex:0 0 auto;padding:9px 10px;" onclick="mapReset()">↺</button>
                 <button class="btn-map btn-map-follow" id="btnMapFollowOv" style="flex:0 0 auto;padding:9px 10px;" onclick="mapToggleFollow()">📍</button>
                 <button class="btn-map btn-map-follow" id="btnMapCompassOv" style="flex:0 0 auto;padding:9px 10px;" onclick="mapToggleHeadingUp()" title="진행방향으로 자동회전">
@@ -2344,9 +2344,8 @@
                     <span id="mapOvDist" style="color:#1a5fa8;font-weight:700;">0.00km</span>
                 </div>
                 <span id="mapOvProgress" style="font-size:0.9em;font-weight:700;color:#1a5fa8;white-space:nowrap;flex:0 0 auto;"></span>
-                <div id="bgWidgetMapOv" style="display:none;flex-shrink:0;text-align:center;line-height:1.2;">
-                    <span class="bg-num" id="bgValueMapOv" style="font-size:0.9em;font-weight:700;">--</span><span style="font-size:0.65em;color:#888;"> mg/dL</span>
-                    <span id="bgTrendMapOv" style="font-size:0.85em;"></span>
+                <div id="bgWidgetMapOv" style="display:none;flex-shrink:0;white-space:nowrap;font-size:0.82em;font-weight:700;">
+                    <span id="bgValueMapOv">--</span><span id="bgTrendMapOv" style="margin-left:1px;"></span>
                 </div>
                 <button class="map-ov-exit" onclick="mapToggleFullscreen()">✕</button>
             </div>
